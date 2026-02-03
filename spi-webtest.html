@@ -1,0 +1,3098 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>WebTest</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    referrerpolicy="no-referrer"
+  />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ink: {
+              50: '#F8FAFC', 100: '#F1F5F9', 200: '#E2E8F0', 300: '#CBD5E1',
+              400: '#94A3B8', 500: '#64748B', 600: '#475569', 700: '#334155',
+              800: '#1F2937', 900: '#0B1220'
+            },
+            accent: { 500: '#6D5EF1', 600: '#5B4FE6' }
+          },
+          boxShadow: {
+            'soft': '0 10px 30px rgba(2,6,23,0.08)',
+            'soft-dark': '0 10px 30px rgba(0,0,0,0.35)'
+          },
+          keyframes: {
+            fadeUp: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            }
+          },
+          animation: {
+            fadeUp: 'fadeUp .55s ease-out both'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root { --sb: rgba(100,116,139,.35); --sb2: rgba(100,116,139,.18); }
+    .dark :root { --sb: rgba(148,163,184,.35); --sb2: rgba(148,163,184,.16); }
+    *::-webkit-scrollbar { width: 10px; height: 10px; }
+    *::-webkit-scrollbar-thumb { background: var(--sb); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
+    *::-webkit-scrollbar-track { background: var(--sb2); }
+
+    /* 统一单选按钮样式：默认空心，选中实心 */
+    input[type="radio"]{
+      -webkit-appearance:none;
+      appearance:none;
+      width:18px;
+      height:18px;
+      border-radius:999px;
+      border:2px solid rgba(100,116,139,.55);
+      background:transparent;
+      display:inline-grid;
+      place-content:center;
+      flex: 0 0 auto;
+    }
+    input[type="radio"]::before{
+      content:"";
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      transform:scale(0);
+      transition:transform .12s ease-in-out;
+      background: rgba(109,94,241,1);
+    }
+    input[type="radio"]:checked{ border-color: rgba(109,94,241,.7); }
+    input[type="radio"]:checked::before{ transform:scale(1); }
+    .dark input[type="radio"]{ border-color: rgba(148,163,184,.55); }
+    .dark input[type="radio"]:checked{ border-color: rgba(109,94,241,.8); }
+
+    .btnMain {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 16px 18px;
+      border-radius: 18px;
+      border: 1px solid rgba(226,232,240,.9);
+      background: rgba(255,255,255,.92);
+      transition: transform .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+    .btnMain:hover {
+      transform: scale(1.01);
+      border-color: rgba(203,213,225,1);
+      background: rgba(248,250,252,1);
+      box-shadow: 0 10px 30px rgba(2,6,23,0.06);
+    }
+    .dark .btnMain {
+      border-color: rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .dark .btnMain:hover {
+      border-color: rgba(255,255,255,.18);
+      background: rgba(255,255,255,.07);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.30);
+    }
+  </style>
+</head>
+
+<body class="min-h-full bg-white text-ink-800 dark:bg-ink-900 dark:text-ink-100">
+  <header class="sticky top-0 z-40 border-b border-ink-200/70 bg-white/75 backdrop-blur dark:border-white/10 dark:bg-ink-900/70">
+    <div class="mx-auto flex max-w-2xl items-center justify-between gap-3 px-4 py-3">
+      <div class="flex items-center gap-3">
+        <button id="btnHomeAlways" class="group inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:scale-[1.02] hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:border-emerald-500/30 dark:hover:bg-emerald-500/15" type="button" aria-label="回到主页">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 transition group-hover:bg-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:group-hover:bg-emerald-500/20">
+            <i class="fa-solid fa-house"></i>
+          </span>
+          <span class="hidden sm:inline" data-i18n="common.home">主页</span>
+        </button>
+        <div class="leading-tight">
+          <div class="text-lg font-semibold tracking-tight">WebTest</div>
+          <div class="text-xs text-ink-500 dark:text-ink-400">简约主页面</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <select id="headerLangSelect" class="hidden sm:block rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm outline-none transition hover:scale-[1.02] hover:border-ink-300 hover:bg-ink-50 focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20 dark:hover:bg-white/10" aria-label="界面语言">
+          <option value="zh-CN">中文</option>
+          <option value="ja-JP">日本語</option>
+          <option value="en-US">English</option>
+        </select>
+
+        <button id="btnAdmin" class="hidden group inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm transition hover:scale-[1.02] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20 dark:hover:bg-white/10" type="button" aria-label="管理员">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-700 transition group-hover:bg-ink-200 dark:bg-white/10 dark:text-ink-100 dark:group-hover:bg-white/15">
+            <i class="fa-solid fa-user-shield"></i>
+          </span>
+          <span class="hidden sm:inline" data-i18n="admin.title">管理员</span>
+        </button>
+
+        <button id="themeToggle" class="group inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm transition hover:scale-[1.02] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20 dark:hover:bg-white/10" type="button" aria-label="切换深色/浅色模式">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-700 transition group-hover:bg-ink-200 dark:bg-white/10 dark:text-ink-100 dark:group-hover:bg-white/15">
+          <i id="themeIcon" class="fa-solid fa-circle-half-stroke"></i>
+        </span>
+        <span class="hidden sm:inline">外观</span>
+        <span class="text-xs text-ink-500 dark:text-ink-400 hidden md:inline" id="themeLabel">跟随系统</span>
+      </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-2xl px-4 py-6">
+    <section id="homePanel" class="rounded-2xl border border-ink-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-white/5 dark:shadow-soft-dark animate-fadeUp">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight" data-i18n="home.title">WebTest</h1>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="home.subtitle">请选择一个功能进入。</p>
+        </div>
+      </div>
+
+      <div id="homeButtons" class="mt-5 grid gap-3">
+
+        <button class="btnMain" type="button" data-open="practice" id="btnHomePractice">
+          <div class="flex items-center gap-3">
+            <span class="grid h-11 w-11 place-items-center rounded-2xl bg-ink-100 text-ink-700 dark:bg-white/10 dark:text-ink-100"><i class="fa-solid fa-dumbbell"></i></span>
+            <div class="text-left">
+              <div class="text-base font-semibold">练习模式</div>
+              <div class="text-xs text-ink-500 dark:text-ink-400">一题一题练</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-ink-400"></i>
+        </button>
+
+        <button class="btnMain" type="button" data-open="exam" id="btnHomeExam">
+          <div class="flex items-center gap-3">
+            <span class="grid h-11 w-11 place-items-center rounded-2xl bg-ink-100 text-ink-700 dark:bg-white/10 dark:text-ink-100"><i class="fa-solid fa-file-pen"></i></span>
+            <div class="text-left">
+              <div class="text-base font-semibold">考试模式</div>
+              <div class="text-xs text-ink-500 dark:text-ink-400">整套计时提交</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-ink-400"></i>
+        </button>
+
+        <button class="btnMain" type="button" data-open="review" id="btnHomeReview">
+          <div class="flex items-center gap-3">
+            <span class="grid h-11 w-11 place-items-center rounded-2xl bg-ink-100 text-ink-700 dark:bg-white/10 dark:text-ink-100"><i class="fa-solid fa-rotate-left"></i></span>
+            <div class="text-left">
+              <div class="text-base font-semibold">错题回顾</div>
+              <div class="text-xs text-ink-500 dark:text-ink-400">集中复盘提升</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-ink-400"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- 面板：设置/语言 -->
+    <section id="panel-settings" class="hidden mt-4 rounded-2xl border border-ink-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-white/5 dark:shadow-soft-dark">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold" data-i18n="settings.title">设置 / 语言</h2>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="settings.desc">修改界面语言（只影响界面文字，不影响你上传的题目原文）。</p>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3">
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold" data-i18n="settings.langLabel">界面语言</div>
+          <div class="mt-2">
+            <select id="langSelect" class="w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm font-semibold text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100">
+              <option value="zh-CN">简体中文</option>
+              <option value="ja-JP">日本語</option>
+              <option value="en-US">English</option>
+            </select>
+          </div>
+          <div class="mt-2 text-xs text-ink-500 dark:text-ink-400" data-i18n="settings.langHint">提示：题库内容不做翻译（例如阅读题的日文选项固定不变）。</div>
+        </div>
+
+        <div class="rounded-2xl border border-ink-200 bg-ink-50 p-4 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200" id="statsBox">
+          <div class="font-semibold" data-i18n="stats.title">数据概览</div>
+          <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs dark:border-white/10 dark:bg-white/5"><span class="text-ink-500 dark:text-ink-400" data-i18n="stats.qCount">题库题目</span>：<span id="statQ">0</span></div>
+            <div class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs dark:border-white/10 dark:bg-white/5"><span class="text-ink-500 dark:text-ink-400" data-i18n="stats.wCount">错题数量</span>：<span id="statW">0</span></div>
+            <div class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs dark:border-white/10 dark:bg-white/5"><span class="text-ink-500 dark:text-ink-400" data-i18n="stats.lang">当前语言</span>：<span id="statL">—</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="panel-upload" class="hidden">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold" data-i18n="upload.title">上传题目</h2>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="upload.desc">支持上传阅读题（长文+4小问）与计算题（图片+题干+ABCD）。</p>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3">
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="text-sm font-semibold" data-i18n="upload.type">题型</div>
+            <div class="flex gap-2">
+              <button id="btnTypeReading" class="rounded-xl border border-ink-200 bg-ink-50 px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20">阅读题</button>
+              <button id="btnTypeCalc" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20">计算题</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 阅读题表单 -->
+        <div id="formReading" class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold" data-i18n="upload.readingTitle">阅读题录入</div>
+          <div class="mt-3 grid gap-3">
+            <div>
+              <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.longText">长文</div>
+              <textarea id="readingText" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" rows="5" placeholder="请输入阅读长文..."></textarea>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-2">
+              <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-xs text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+                A. 文脈の論理から明らかに正しい。または正しい内容を含んでいる。
+              </div>
+              <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-xs text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+                B. 文脈の論理から明らかに間違っている。または間違った内容を含んでいる。
+              </div>
+              <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-xs text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200 sm:col-span-2">
+                C. 問題文の内容だけからでは、設問文は論理的に導けない
+              </div>
+            </div>
+
+            <div class="grid gap-3">
+              <div>
+                <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.subQ" data-i18n-arg="1">小问 1</div>
+                <input id="rq1" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入第1个小问题干" />
+                <div class="mt-2 flex items-center gap-2">
+                  <label class="text-xs text-ink-500 dark:text-ink-400" data-i18n="upload.answer">答案</label>
+                  <select id="ra1" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option></select>
+                </div>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.subQ" data-i18n-arg="2">小问 2</div>
+                <input id="rq2" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入第2个小问题干" />
+                <div class="mt-2 flex items-center gap-2">
+                  <label class="text-xs text-ink-500 dark:text-ink-400" data-i18n="upload.answer">答案</label>
+                  <select id="ra2" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option></select>
+                </div>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.subQ" data-i18n-arg="3">小问 3</div>
+                <input id="rq3" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入第3个小问题干" />
+                <div class="mt-2 flex items-center gap-2">
+                  <label class="text-xs text-ink-500 dark:text-ink-400" data-i18n="upload.answer">答案</label>
+                  <select id="ra3" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option></select>
+                </div>
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.subQ" data-i18n-arg="4">小问 4</div>
+                <input id="rq4" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入第4个小问题干" />
+                <div class="mt-2 flex items-center gap-2">
+                  <label class="text-xs text-ink-500 dark:text-ink-400" data-i18n="upload.answer">答案</label>
+                  <select id="ra4" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option></select>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.explain">解析（可选）</div>
+              <textarea id="readingExplain" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" rows="3" placeholder="可输入解析..."></textarea>
+            </div>
+
+            <button id="btnAddReading" class="rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-soft transition hover:scale-[1.01] hover:bg-accent-600 dark:shadow-soft-dark" type="button" data-i18n="upload.addReading">添加阅读题</button>
+            <div class="text-xs text-ink-500 dark:text-ink-400" id="readingHint"></div>
+          </div>
+        </div>
+
+        <!-- 计算题表单 -->
+        <div id="formCalc" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold" data-i18n="upload.calcTitle">计算题录入</div>
+          <div class="mt-3 grid gap-3">
+            <div>
+              <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.calcImage">题目图片（必传）</div>
+              <input id="calcImage" type="file" accept="image/*" class="mt-2 block w-full text-xs text-ink-600 file:mr-3 file:rounded-xl file:border-0 file:bg-accent-500 file:px-3 file:py-2 file:text-white file:font-semibold hover:file:bg-accent-600 dark:text-ink-300" />
+              <div class="mt-2 hidden" id="calcPreviewWrap">
+                <img id="calcPreviewImg" alt="题目图片预览" class="w-full rounded-2xl border border-ink-200 dark:border-white/10" loading="lazy" />
+              </div>
+            </div>
+
+            <div>
+              <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.calcStem">题干</div>
+              <input id="calcStem" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入题干..." />
+            </div>
+
+            <div class="grid gap-3 md:grid-cols-2">
+              <div>
+                <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">选项 A</div>
+                <input id="cA" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入A" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">选项 B</div>
+                <input id="cB" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入B" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">选项 C</div>
+                <input id="cC" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入C" />
+              </div>
+              <div>
+                <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">选项 D</div>
+                <input id="cD" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入D" />
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.calcAnswer">正确答案</div>
+              <select id="calcAnswer" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+            </div>
+
+            <div>
+              <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.explain">解析（可选）</div>
+              <textarea id="calcExplain" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" rows="3" placeholder="可输入解析..."></textarea>
+            </div>
+
+            <button id="btnAddCalc" class="rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-soft transition hover:scale-[1.01] hover:bg-accent-600 dark:shadow-soft-dark" type="button" data-i18n="upload.addCalc">添加计算题</button>
+            <div class="text-xs text-ink-500 dark:text-ink-400" id="calcHint"></div>
+          </div>
+        </div>
+
+        <!-- 题库预览 -->
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <div class="text-sm font-semibold" data-i18n="bank.title">题库</div>
+              <div class="mt-1 text-xs text-ink-500 dark:text-ink-400" data-i18n="bank.subtitle">已保存到本地浏览器（LocalStorage）。</div>
+            </div>
+            <button id="btnClearBank" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" type="button" data-i18n="bank.clear">清空题库</button>
+          </div>
+          <div class="mt-3 text-sm text-ink-700 dark:text-ink-200" id="bankList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 面板：练习模式 -->
+    <section id="panel-practice" class="hidden mt-4 rounded-2xl border border-ink-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-white/5 dark:shadow-soft-dark">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold" data-i18n="practice.title">练习模式</h2>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="practice.desc">阅读题每题 50 秒；计算题每题 40 秒。完成后显示答案与解析。</p>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3">
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div class="text-sm font-semibold" data-i18n="practice.choose">选择练习类型</div>
+            <div class="flex gap-2">
+              <button id="btnStartPracticeReading" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="practice.startReading">开始阅读练习（1组）</button>
+              <button id="btnStartPracticeCalc" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="practice.startCalc">开始计算练习（1题）</button>
+            </div>
+          </div>
+          <div class="mt-2 text-xs text-ink-500 dark:text-ink-400" id="practiceHint"></div>
+        </div>
+
+        <div id="practiceStage" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm font-semibold" id="practiceTitle">—</div>
+            <div class="flex items-center gap-2">
+              <div class="rounded-xl border border-ink-200 bg-ink-50 px-3 py-1 text-xs font-semibold text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+                <span data-i18n="common.timeLeft">剩余时间</span>：<span id="practiceTimer">--</span>
+              </div>
+              <button id="btnPracticeExitTop" class="rounded-xl border border-ink-200 bg-white px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="common.exit">退出</button>
+              <button id="btnPracticeSkipTop" class="rounded-xl border border-ink-200 bg-white px-3 py-1.5 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button">跳过此题</button>
+            </div>
+          </div>
+          <div class="mt-3" id="practiceBody"></div>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button id="btnPracticeSubmit" class="rounded-xl bg-accent-500 px-3 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] hover:bg-accent-600" type="button" data-i18n="common.submit">提交</button>
+            <button id="btnPracticeNext" class="hidden rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="common.next">下一题</button>
+            <!-- 跳过按钮已移动到顶部（btnPracticeSkipTop） -->
+          </div>
+          <div class="mt-3 hidden" id="practiceResult"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 面板：考试模式 -->
+    <section id="panel-exam" class="hidden mt-4 rounded-2xl border border-ink-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-white/5 dark:shadow-soft-dark">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold" data-i18n="exam.title">考试模式</h2>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="exam.desc">阅读：10组（35分钟）→ 计算：30题（25分钟）。可提前提交，超时自动结束。</p>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-3">
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div class="text-sm font-semibold" data-i18n="exam.status">考试状态</div>
+              <div class="mt-1 text-xs text-ink-500 dark:text-ink-400" id="examHint"></div>
+            </div>
+            <div class="flex gap-2">
+              <button id="btnStartExam" class="rounded-xl bg-accent-500 px-3 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] hover:bg-accent-600" type="button" data-i18n="exam.start">开始考试</button>
+              <button id="btnExitExam" class="hidden rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="common.exit">退出</button>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between">
+            <div class="text-xs text-ink-500 dark:text-ink-400">
+              <span data-i18n="common.timeLeft">剩余时间</span>：<span id="examTimer">--:--</span>
+            </div>
+            <div class="text-xs font-semibold text-ink-700 dark:text-ink-200">
+              <span data-i18n="common.progress">进度</span>：<span id="examProgress">0/0</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="examStage" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold" id="examTitle">—</div>
+          <div class="mt-3" id="examBody"></div>
+          <div class="mt-4 flex justify-end gap-2">
+            <button id="btnNextExam" class="hidden rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-accent-600" type="button" data-i18n="common.next">下一题</button>
+            <button id="btnSubmitExam" class="hidden rounded-xl border border-ink-200 bg-white px-4 py-2 text-sm font-semibold text-ink-700 shadow-sm transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="exam.submit">提交答案</button>
+          </div>
+        </div>
+
+        <div id="examResult" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5"></div>
+      </div>
+    </section>
+
+    <!-- 面板：管理员 -->
+    <section id="panel-admin" class="hidden mt-4 rounded-2xl border border-ink-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-white/5 dark:shadow-soft-dark">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold" data-i18n="admin.title">管理员面板</h2>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="admin.desc">高级功能：数据管理、导入导出、系统设置</p>
+        </div>
+      </div>
+
+      <div class="mt-4 grid gap-4">
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold" data-i18n="admin.dataManagement">数据管理</div>
+          <div class="mt-3 grid gap-2 sm:grid-cols-2">
+            <button id="btnExportAll" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100">
+              <i class="fa-solid fa-file-export mr-2"></i><span data-i18n="admin.exportAll">导出全部数据</span>
+            </button>
+            <button id="btnImportData" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button">
+              <i class="fa-solid fa-file-import mr-2"></i><span data-i18n="admin.importData">导入数据</span>
+            </button>
+            <input type="file" id="importFileInput" accept="application/json,.json" class="hidden" />
+            <button id="btnClearAllData" class="rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:scale-[1.01] hover:border-red-300 hover:bg-red-50 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400" type="button">
+              <i class="fa-solid fa-trash-can mr-2"></i><span data-i18n="admin.clearAllData">清空所有数据</span>
+            </button>
+          </div>
+          <div class="mt-2 text-xs text-ink-500 dark:text-ink-400" data-i18n="admin.importHint">导入策略：合并（按 id 去重，缺失 id 的数据自动补 id）。</div>
+        </div>
+
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm font-semibold" data-i18n="admin.questionBank">题库管理</div>
+            <div class="text-xs text-ink-500 dark:text-ink-400"><span data-i18n="admin.totalQuestions">总题数</span>：<span id="adminTotalQuestions">0</span></div>
+          </div>
+          <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <select id="adminQuestionFilter" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm outline-none transition hover:border-ink-300 focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100">
+              <option value="all" data-i18n="admin.filterAll">全部</option>
+              <option value="reading" data-i18n="admin.filterReading">阅读题</option>
+              <option value="calc" data-i18n="admin.filterCalc">计算题</option>
+            </select>
+            <div class="flex w-full gap-2 sm:w-auto">
+              <input id="adminSearchQuestions" class="w-full sm:w-64 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="搜索题干/长文..." />
+              <button id="btnAdminImportBank" class="rounded-xl bg-accent-500 px-3 py-2 text-sm font-semibold text-white transition hover:bg-accent-600" type="button">上传题库(JSON)</button>
+              <input type="file" id="adminBankFileInput" accept="application/json,.json" class="hidden" />
+            </div>
+          </div>
+          <div id="adminQuestionList" class="mt-3 max-h-72 overflow-auto pr-1"></div>
+        </div>
+
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <details id="adminUploadDetails">
+            <summary class="cursor-pointer select-none text-sm font-semibold text-ink-700 dark:text-ink-200">录入题目（管理员）</summary>
+            <div class="mt-3" id="adminUploadMount"></div>
+          </details>
+        </div>
+
+
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold" data-i18n="admin.stats">统计</div>
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+              <div class="text-xs text-ink-500 dark:text-ink-400" data-i18n="admin.accuracyPractice">练习正确率</div>
+              <div class="mt-1 text-lg font-semibold" id="statPracticeAcc">—</div>
+            </div>
+            <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+              <div class="text-xs text-ink-500 dark:text-ink-400" data-i18n="admin.accuracyExam">考试正确率</div>
+              <div class="mt-1 text-lg font-semibold" id="statExamAcc">—</div>
+            </div>
+          </div>
+          <div class="mt-3 rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+            <div class="text-xs text-ink-500 dark:text-ink-400" data-i18n="admin.trend7d">近 7 天做题趋势</div>
+            <canvas id="statTrendCanvas" class="mt-2 w-full" height="120"></canvas>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold">答案反馈汇总（本机）</div>
+          <div class="mt-3 flex items-center justify-between gap-2">
+            <select id="adminFeedbackFilter" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm outline-none transition hover:border-ink-300 focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100">
+              <option value="all">全部</option>
+              <option value="reading">阅读题</option>
+              <option value="calc">计算题</option>
+            </select>
+            <button id="btnClearFeedback" class="rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:scale-[1.01] hover:border-red-300 hover:bg-red-50 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400" type="button">清空反馈</button>
+          </div>
+          <div class="mt-3" id="adminFeedbackList"></div>
+          <div class="mt-2 text-xs text-ink-500 dark:text-ink-400">说明：仅统计本浏览器本机的反馈记录。</div>
+        </div>
+
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold" data-i18n="admin.systemSettings">系统设置</div>
+          <div class="mt-3 grid gap-3">
+            <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+              <div class="font-semibold" data-i18n="admin.practiceSettings">练习设置</div>
+              <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                <label class="flex items-center justify-between gap-2">
+                  <span class="text-xs text-ink-500 dark:text-ink-400" data-i18n="admin.readingTimePerQ">阅读每题(秒)</span>
+                  <input type="number" id="settingReadingTime" min="10" max="300" class="w-24 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" />
+                </label>
+                <label class="flex items-center justify-between gap-2">
+                  <span class="text-xs text-ink-500 dark:text-ink-400" data-i18n="admin.calcTimePerQ">计算每题(秒)</span>
+                  <input type="number" id="settingCalcTime" min="10" max="300" class="w-24 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" />
+                </label>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+              <div class="font-semibold" data-i18n="admin.examSettings">考试设置</div>
+              <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                <label class="flex items-center justify-between gap-2">
+                  <span class="text-xs text-ink-500 dark:text-ink-400" data-i18n="admin.readingExamTime">阅读部分(分钟)</span>
+                  <input type="number" id="settingReadingExamTime" min="5" max="120" class="w-24 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" />
+                </label>
+                <label class="flex items-center justify-between gap-2">
+                  <span class="text-xs text-ink-500 dark:text-ink-400" data-i18n="admin.calcExamTime">计算部分(分钟)</span>
+                  <input type="number" id="settingCalcExamTime" min="5" max="120" class="w-24 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" />
+                </label>
+              </div>
+            </div>
+
+            <div class="flex justify-end">
+              <button id="btnSaveSettings" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-600" type="button" data-i18n="common.save">保存设置</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 面板：错题回顾 -->
+    <section id="panel-review" class="hidden mt-4 rounded-2xl border border-ink-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-white/5 dark:shadow-soft-dark">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-lg font-semibold" data-i18n="review.title">错题回顾</h2>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="review.desc">所有做错的题都会自动收录。你可以随时删除。</p>
+        </div>
+        <button id="btnClearWrong" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" type="button" data-i18n="review.clear">清空错题</button>
+      </div>
+      <div class="mt-4" id="wrongList"></div>
+    </section>
+
+    <!-- 管理员口令遮罩（仅 #admin 时出现） -->
+    <div id="adminGate" class="fixed inset-0 z-[60] hidden items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div class="w-[92%] max-w-sm rounded-2xl border border-ink-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-ink-900 dark:shadow-soft-dark">
+        <div class="text-lg font-semibold" data-i18n="admin.title">管理员</div>
+        <div class="mt-1 text-sm text-ink-600 dark:text-ink-300"></div>
+        <input id="adminPassInput" type="password" inputmode="numeric" class="mt-4 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="口令" />
+        <div class="mt-2 text-xs text-red-600 hidden" id="adminGateErr">口令错误</div>
+        <div class="mt-4 flex items-center justify-end gap-2">
+          <button id="adminGateCancel" class="rounded-xl border border-ink-200 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button">取消</button>
+          <button id="adminGateOk" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-600" type="button">进入</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 轻提示 -->
+    <div id="toast" class="pointer-events-none fixed left-1/2 top-4 z-50 hidden -translate-x-1/2 rounded-2xl border border-ink-200 bg-white/90 px-4 py-2 text-sm font-semibold text-ink-700 shadow-soft backdrop-blur dark:border-white/10 dark:bg-ink-900/80 dark:text-ink-100 dark:shadow-soft-dark"></div>
+  </main>
+
+  <!-- 底部信息栏：保持作者区 -->
+  <footer class="mt-10 border-t border-ink-200/70 bg-ink-50 dark:border-white/10 dark:bg-black/20">
+    <div class="mx-auto max-w-2xl px-4 py-8">
+      <div class="grid gap-6 md:grid-cols-3">
+        <div>
+          <div class="text-sm font-semibold">作者信息</div>
+          <div class="mt-2 text-sm text-ink-600 dark:text-ink-300">作者姓名：<span class="font-semibold text-ink-800 dark:text-ink-100">考试通</span></div>
+          <div class="mt-1 text-sm text-ink-600 dark:text-ink-300">红书号：<span class="font-semibold text-ink-800 dark:text-ink-100">6182865435</span></div>
+        </div>
+        <div>
+          <div class="text-sm font-semibold">社交媒体</div>
+          <div class="mt-2">
+            <a class="inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-medium text-ink-700 shadow-sm transition hover:scale-[1.02] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20 dark:hover:bg-white/10"
+               href="#" id="xhsCopyLink" aria-label="复制小红书号" role="button">
+              <i class="fa-solid fa-link"></i>
+              红书号：6182865435
+            </a>
+          </div>
+        </div>
+        <div class="md:text-right">
+          <div class="text-sm font-semibold">版权</div>
+          <div class="mt-2 text-sm text-ink-600 dark:text-ink-300">© <span id="year"></span> 考试通 · 保留所有权利</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const THEME_KEY = 'themePreference';
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const themeLabel = document.getElementById('themeLabel');
+
+    function getSystemPrefersDark() {
+      return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+
+    function applyTheme(pref) {
+      const html = document.documentElement;
+      let mode = pref;
+      if (!mode || mode === 'system') mode = getSystemPrefersDark() ? 'dark' : 'light';
+      if (mode === 'dark') html.classList.add('dark');
+      else html.classList.remove('dark');
+
+      const saved = pref || 'system';
+      if (saved === 'system') {
+        themeIcon.className = 'fa-solid fa-circle-half-stroke';
+        themeLabel.textContent = '跟随系统';
+      } else if (saved === 'dark') {
+        themeIcon.className = 'fa-solid fa-moon';
+        themeLabel.textContent = '深色模式';
+      } else {
+        themeIcon.className = 'fa-solid fa-sun';
+        themeLabel.textContent = '浅色模式';
+      }
+    }
+
+    function setTheme(pref) {
+      localStorage.setItem(THEME_KEY, pref);
+      applyTheme(pref);
+    }
+
+    function initTheme() {
+      const saved = localStorage.getItem(THEME_KEY) || 'system';
+      applyTheme(saved);
+      if (window.matchMedia) {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        mq.addEventListener?.('change', () => {
+          const cur = localStorage.getItem(THEME_KEY) || 'system';
+          if (cur === 'system') applyTheme('system');
+        });
+      }
+    }
+
+    themeToggle.addEventListener('click', () => {
+      const cur = localStorage.getItem(THEME_KEY) || 'system';
+      const next = cur === 'system' ? 'light' : (cur === 'light' ? 'dark' : 'system');
+      setTheme(next);
+    });
+
+    // ===== 数据存储（LocalStorage） =====
+    const LS_KEYS = {
+      lang: 'webtestLang',
+      bank: 'webtestQuestionBank',
+      wrong: 'webtestWrongBook',
+      settings: 'webtestSettings',
+      history: 'webtestHistory',
+      feedback: 'webtestAnswerFeedback'
+    };
+
+    function safeJsonParse(s, fallback) {
+      try {
+        const v = JSON.parse(s);
+        return v ?? fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function loadBank() {
+      return safeJsonParse(localStorage.getItem(LS_KEYS.bank), []);
+    }
+
+    function saveBank(bank) {
+      localStorage.setItem(LS_KEYS.bank, JSON.stringify(bank));
+    }
+
+    function loadWrong() {
+      return safeJsonParse(localStorage.getItem(LS_KEYS.wrong), []);
+    }
+
+    function saveWrong(wrong) {
+      localStorage.setItem(LS_KEYS.wrong, JSON.stringify(wrong));
+    }
+
+    function defaultSettings() {
+      return {
+        practice: { readingSec: 50, calcSec: 40 },
+        exam: { readingMin: 35, calcMin: 25 }
+      };
+    }
+
+    function loadSettings() {
+      return {
+        ...defaultSettings(),
+        ...safeJsonParse(localStorage.getItem(LS_KEYS.settings), {})
+      };
+    }
+
+    function saveSettings(s) {
+      localStorage.setItem(LS_KEYS.settings, JSON.stringify(s));
+    }
+
+    function loadHistory() {
+      return safeJsonParse(localStorage.getItem(LS_KEYS.history), []);
+    }
+
+    function saveHistory(h) {
+      localStorage.setItem(LS_KEYS.history, JSON.stringify(h));
+    }
+
+    function loadFeedback() {
+      return safeJsonParse(localStorage.getItem(LS_KEYS.feedback), []);
+    }
+
+    function saveFeedback(list) {
+      localStorage.setItem(LS_KEYS.feedback, JSON.stringify(list));
+    }
+
+    function addFeedback(evt) {
+      const qKey = String(evt.qKey || '');
+      const type = String(evt.type || '');
+      const suggest = String(evt.suggest || '');
+      if (!qKey || !type || !suggest) return;
+
+      const list = loadFeedback();
+      const idx = list.findIndex(x => String(x.qKey) === qKey && String(x.type) === type);
+      const item = {
+        id: idx >= 0 ? list[idx].id : uid(),
+        at: Date.now(),
+        qKey,
+        type,
+        suggest
+      };
+      if (idx >= 0) list[idx] = item;
+      else list.push(item);
+
+      if (list.length > 10000) list.splice(0, list.length - 10000);
+      saveFeedback(list);
+    }
+
+    function addHistoryEvent(e) {
+      const list = loadHistory();
+      list.push({
+        id: uid(),
+        at: e.at || Date.now(),
+        kind: e.kind || 'unknown',
+        type: e.type || '',
+        ok: !!e.ok
+      });
+      // 只保留最近 5000 条，避免无限膨胀
+      if (list.length > 5000) list.splice(0, list.length - 5000);
+      saveHistory(list);
+    }
+
+    function uid() {
+      return `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    }
+
+    // ===== 轻提示 =====
+    function showToast(text) {
+      const el = document.getElementById('toast');
+      el.textContent = text;
+      el.classList.remove('hidden');
+      el.classList.add('animate-fadeUp');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => {
+        el.classList.add('hidden');
+      }, 1200);
+    }
+
+    // ===== 多语言（仅界面文案可变） =====
+    const I18N = {
+      'zh-CN': {
+        'home.title': 'WebTest',
+        'home.subtitle': '请选择一个功能进入。',
+        'common.back': '返回',
+        'common.exit': '退出',
+        'common.submit': '提交',
+        'common.next': '下一题',
+        'common.timeLeft': '剩余时间',
+        'common.progress': '进度',
+        'common.home': '主页',
+        'common.save': '保存',
+        'common.loading': '加载中...',
+
+        'admin.title': '管理员',
+        'admin.desc': '高级功能：数据管理、导入导出、系统设置',
+        'admin.dataManagement': '数据管理',
+        'admin.exportAll': '导出全部数据',
+        'admin.importData': '导入数据',
+        'admin.clearAllData': '清空所有数据',
+        'admin.importHint': '导入策略：合并（按 id 去重，缺失 id 的数据自动补 id）。',
+        'admin.questionBank': '题库管理',
+        'admin.totalQuestions': '总题数',
+        'admin.filterAll': '全部',
+        'admin.filterReading': '阅读题',
+        'admin.filterCalc': '计算题',
+        'admin.wrongBook': '错题本',
+        'admin.exportWrong': '导出错题',
+        'admin.stats': '统计',
+        'admin.accuracyPractice': '练习正确率',
+        'admin.accuracyExam': '考试正确率',
+        'admin.trend7d': '近 7 天做题趋势',
+        'admin.systemSettings': '系统设置',
+        'admin.practiceSettings': '练习设置',
+        'admin.readingTimePerQ': '阅读每题(秒)',
+        'admin.calcTimePerQ': '计算每题(秒)',
+        'admin.examSettings': '考试设置',
+        'admin.readingExamTime': '阅读部分(分钟)',
+        'admin.calcExamTime': '计算部分(分钟)',
+
+        'settings.title': '设置 / 语言',
+        'settings.desc': '修改界面语言（只影响界面文字，不影响你上传的题目原文）。',
+        'settings.langLabel': '界面语言',
+        'settings.langHint': '提示：题库内容不做翻译（例如阅读题的日文选项固定不变）。',
+
+        'stats.title': '数据概览',
+        'stats.qCount': '题库题目',
+        'stats.wCount': '错题数量',
+        'stats.lang': '当前语言',
+
+        'upload.title': '上传题目',
+        'upload.desc': '支持上传阅读题（长文+4小问）与计算题（图片+题干+ABCD）。',
+        'upload.type': '题型',
+        'upload.readingTitle': '阅读题录入',
+        'upload.calcTitle': '计算题录入',
+        'upload.longText': '长文',
+        'upload.explain': '解析（可选）',
+        'upload.subQ': '小问 {n}',
+        'upload.answer': '答案',
+        'review.none': '暂无错题',
+        'review.expand': '展开详情',
+        'upload.addReading': '添加阅读题',
+        'upload.calcImage': '题目图片（必传）',
+        'upload.calcStem': '题干',
+        'upload.calcAnswer': '正确答案',
+        'upload.addCalc': '添加计算题',
+
+        'bank.title': '题库',
+        'bank.subtitle': '已保存到本地浏览器（LocalStorage）。',
+        'bank.clear': '清空题库',
+
+        'practice.title': '练习模式',
+        'practice.desc': '阅读题每题 50 秒；计算题每题 40 秒。完成后显示答案与解析。',
+        'practice.choose': '选择练习类型',
+        'practice.startReading': '开始阅读练习（1组）',
+        'practice.startCalc': '开始计算练习（1题）',
+
+        'exam.title': '考试模式',
+        'exam.desc': '阅读：10组（35分钟）→ 计算：30题（25分钟）。可提前提交，超时自动结束。',
+        'exam.status': '考试状态',
+        'exam.start': '开始考试',
+        'exam.submit': '提交答案',
+
+        'review.title': '错题回顾',
+        'review.desc': '所有做错的题都会自动收录。你可以随时删除。',
+        'review.clear': '清空错题'
+      },
+      'ja-JP': {
+        'home.title': 'WebTest',
+        'common.save': '保存',
+        'common.loading': '読み込み中...',
+
+        'admin.title': '管理者',
+        'admin.desc': '高度な機能：データ管理、インポート/エクスポート、設定',
+        'admin.dataManagement': 'データ管理',
+        'admin.exportAll': '全データを書き出し',
+        'admin.importData': 'データを読み込み',
+        'admin.clearAllData': '全データを削除',
+        'admin.importHint': 'インポート方針：マージ（id で重複排除、id がない場合は自動付与）。',
+        'admin.questionBank': '問題集管理',
+        'admin.totalQuestions': '総問題数',
+        'admin.filterAll': 'すべて',
+        'admin.filterReading': '読解',
+        'admin.filterCalc': '計算',
+        'admin.wrongBook': '誤答ノート',
+        'admin.exportWrong': '誤答を書き出し',
+        'admin.stats': '統計',
+        'admin.accuracyPractice': '練習正答率',
+        'admin.accuracyExam': '試験正答率',
+        'admin.trend7d': '直近7日トレンド',
+        'admin.systemSettings': '設定',
+        'admin.practiceSettings': '練習設定',
+        'admin.readingTimePerQ': '読解(秒/問)',
+        'admin.calcTimePerQ': '計算(秒/問)',
+        'admin.examSettings': '試験設定',
+        'admin.readingExamTime': '読解(分)',
+        'admin.calcExamTime': '計算(分)',
+        'home.subtitle': '機能を選択してください。',
+        'common.back': '戻る',
+        'common.exit': '終了',
+        'common.submit': '提出',
+        'common.next': '次へ',
+        'common.timeLeft': '残り時間',
+        'common.progress': '進捗',
+        'common.home': 'ホーム',
+
+        'settings.title': '設定 / 言語',
+        'settings.desc': 'UI の言語を変更します（アップロードした問題文は翻訳しません）。',
+        'settings.langLabel': 'UI 言語',
+        'settings.langHint': '注：問題データは翻訳しません（読解の日本語選択肢は固定）。',
+
+        'stats.title': '概要',
+        'stats.qCount': '問題数',
+        'stats.wCount': '誤答数',
+        'stats.lang': '言語',
+
+        'upload.title': '問題の追加',
+        'upload.desc': '読解（本文+4問）と計算（画像+本文+ABCD）に対応。',
+        'upload.type': 'タイプ',
+        'upload.readingTitle': '読解問題の入力',
+        'upload.calcTitle': '計算問題の入力',
+        'upload.longText': '本文',
+        'upload.explain': '解説（任意）',
+        'upload.subQ': '設問 {n}',
+        'upload.answer': '解答',
+        'review.none': '誤答はありません',
+        'review.expand': '詳細を表示',
+        'upload.addReading': '読解を追加',
+        'upload.calcImage': '画像（必須）',
+        'upload.calcStem': '問題文',
+        'upload.calcAnswer': '正解',
+        'upload.addCalc': '計算を追加',
+
+        'bank.title': '問題集',
+        'bank.subtitle': 'LocalStorage に保存されます。',
+        'bank.clear': '問題集をクリア',
+
+        'practice.title': '練習',
+        'practice.desc': '読解：50秒/問、計算：40秒/問。終了後に解答と解説を表示。',
+        'practice.choose': '練習タイプ',
+        'practice.startReading': '読解（1セット）開始',
+        'practice.startCalc': '計算（1問）開始',
+
+        'exam.title': '試験',
+        'exam.desc': '読解10セット（35分）→ 計算30問（25分）。提出可、時間切れで自動終了。',
+        'exam.status': '状態',
+        'exam.start': '開始',
+        'exam.submit': '提出',
+
+        'review.title': '誤答ノート',
+        'review.desc': '間違えた問題は自動で追加され、いつでも削除できます。',
+        'review.clear': '全削除'
+      },
+      'en-US': {
+        'home.title': 'WebTest',
+        'common.save': 'Save',
+        'common.loading': 'Loading...',
+
+        'admin.title': 'Admin',
+        'admin.desc': 'Advanced tools: data management, import/export, settings',
+        'admin.dataManagement': 'Data',
+        'admin.exportAll': 'Export all',
+        'admin.importData': 'Import',
+        'admin.clearAllData': 'Clear all data',
+        'admin.importHint': 'Import strategy: merge (dedupe by id; auto-generate missing id).',
+        'admin.questionBank': 'Question bank',
+        'admin.totalQuestions': 'Total',
+        'admin.filterAll': 'All',
+        'admin.filterReading': 'Reading',
+        'admin.filterCalc': 'Math',
+        'admin.wrongBook': 'Wrong book',
+        'admin.exportWrong': 'Export wrong',
+        'admin.stats': 'Stats',
+        'admin.accuracyPractice': 'Practice accuracy',
+        'admin.accuracyExam': 'Exam accuracy',
+        'admin.trend7d': '7-day trend',
+        'admin.systemSettings': 'Settings',
+        'admin.practiceSettings': 'Practice settings',
+        'admin.readingTimePerQ': 'Reading (sec/question)',
+        'admin.calcTimePerQ': 'Math (sec/question)',
+        'admin.examSettings': 'Exam settings',
+        'admin.readingExamTime': 'Reading (min)',
+        'admin.calcExamTime': 'Math (min)',
+        'home.subtitle': 'Choose a feature to continue.',
+        'common.back': 'Back',
+        'common.exit': 'Exit',
+        'common.submit': 'Submit',
+        'common.next': 'Next',
+        'common.timeLeft': 'Time left',
+        'common.progress': 'Progress',
+        'common.home': 'Home',
+
+        'settings.title': 'Settings / Language',
+        'settings.desc': 'Change UI language (uploaded question content will not be translated).',
+        'settings.langLabel': 'UI language',
+        'settings.langHint': 'Note: question bank content is not translated (reading options in Japanese stay fixed).',
+
+        'stats.title': 'Overview',
+        'stats.qCount': 'Questions',
+        'stats.wCount': 'Wrong items',
+        'stats.lang': 'Language',
+
+        'upload.title': 'Add Questions',
+        'upload.desc': 'Supports Reading (passage + 4 questions) and Math (image + stem + ABCD).',
+        'upload.type': 'Type',
+        'upload.readingTitle': 'Add Reading',
+        'upload.calcTitle': 'Add Math',
+        'upload.longText': 'Passage',
+        'upload.explain': 'Explanation (optional)',
+        'upload.subQ': 'Question {n}',
+        'upload.answer': 'Answer',
+        'review.none': 'No wrong items',
+        'review.expand': 'Show details',
+        'upload.addReading': 'Add Reading',
+        'upload.calcImage': 'Image (required)',
+        'upload.calcStem': 'Stem',
+        'upload.calcAnswer': 'Correct answer',
+        'upload.addCalc': 'Add Math',
+
+        'bank.title': 'Question Bank',
+        'bank.subtitle': 'Stored in LocalStorage.',
+        'bank.clear': 'Clear bank',
+
+        'practice.title': 'Practice',
+        'practice.desc': 'Reading: 50s/question; Math: 40s/question. Shows answers & explanations after.',
+        'practice.choose': 'Practice type',
+        'practice.startReading': 'Start Reading (1 set)',
+        'practice.startCalc': 'Start Math (1 question)',
+
+        'exam.title': 'Exam',
+        'exam.desc': 'Reading: 10 sets (35min) → Math: 30 questions (25min). Auto end on timeout.',
+        'exam.status': 'Status',
+        'exam.start': 'Start exam',
+        'exam.submit': 'Submit',
+
+        'review.title': 'Wrong Book',
+        'review.desc': 'All wrong answers are saved here. You can delete any item.',
+        'review.clear': 'Clear all'
+      }
+    };
+
+    function getLang() {
+      return localStorage.getItem(LS_KEYS.lang) || (navigator.language || 'zh-CN');
+    }
+
+    function normalizeLang(lang) {
+      if (lang.startsWith('zh')) return 'zh-CN';
+      if (lang.startsWith('ja')) return 'ja-JP';
+      return 'en-US';
+    }
+
+    function t(key) {
+      const lang = normalizeLang(getLang());
+      return (I18N[lang] && I18N[lang][key]) || I18N['zh-CN'][key] || '';
+    }
+
+    function applyI18n() {
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        const argN = el.getAttribute('data-i18n-arg');
+        let text = t(key);
+        if (argN) {
+          text = text.replaceAll('{n}', String(argN));
+        }
+        el.textContent = text;
+      });
+
+      // 不给题库内容做翻译：题库渲染时直接使用存储内容
+      // 更新动态统计
+      refreshStats();
+    }
+
+    function setLang(lang) {
+      localStorage.setItem(LS_KEYS.lang, normalizeLang(lang));
+      applyI18n();
+    }
+
+    // ===== 页面切换（主页5按钮 -> 功能面板） =====
+    const panels = {
+      practice: document.getElementById('panel-practice'),
+      exam: document.getElementById('panel-exam'),
+      review: document.getElementById('panel-review'),
+      admin: document.getElementById('panel-admin')
+    };
+
+    function openPanel(name) {
+      Object.values(panels).forEach(p => p.classList.add('hidden'));
+      document.getElementById('homePanel')?.classList.add('hidden');
+      const p = panels[name];
+      if (p) {
+        p.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      refreshAllLists();
+    }
+
+    function backHome() {
+      Object.values(panels).forEach(p => p.classList.add('hidden'));
+      document.getElementById('homePanel')?.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      refreshAllLists();
+    }
+
+    function isExamRunning() {
+      return !!(examState && (document.getElementById('examStage') && !document.getElementById('examStage').classList.contains('hidden')));
+    }
+
+    function exitExamToHome() {
+      stopExamTimer();
+      examState = null;
+      showExamUI(false);
+      document.getElementById('examResult').classList.add('hidden');
+      document.getElementById('examHint').textContent = '';
+    }
+
+    function smartGoHome() {
+      if (isExamRunning()) {
+        const ok = confirm('考试正在进行，是否结束考试并返回主页？');
+        if (!ok) return;
+        exitExamToHome();
+      }
+      backHome();
+    }
+
+    document.getElementById('btnHomeAlways')?.addEventListener('click', smartGoHome);
+
+    // ===== 管理员面板入口 =====
+    document.getElementById('btnAdmin')?.addEventListener('click', () => openPanel('admin'));
+
+    // 主页按钮：除考试外都直接回主页
+    // 在考试进行中会二次确认结束考试
+    
+    document.querySelectorAll('#homeButtons [data-open]').forEach(btn => {
+      btn.addEventListener('click', () => openPanel(btn.getAttribute('data-open')));
+    });
+
+    function mountAdminUploadForm() {
+      const mount = document.getElementById('adminUploadMount');
+      const upload = document.getElementById('panel-upload');
+      if (!mount || !upload) return;
+      if (mount.contains(upload)) return;
+      mount.appendChild(upload);
+      upload.classList.remove('hidden');
+    }
+
+    function refreshAdminPanel() {
+      const totalEl = document.getElementById('adminTotalQuestions');
+      if (totalEl) totalEl.textContent = String(loadBank().length);
+      mountAdminUploadForm();
+      renderAdminQuestionList();
+      renderAdminFeedbackList();
+      updateAdminStats();
+      syncAdminSettingsUI();
+    }
+
+    // 进入管理员面板时刷新
+    const _openPanel = openPanel;
+    openPanel = function(name) {
+      _openPanel(name);
+      if (name === 'admin') refreshAdminPanel();
+    };
+
+    // 管理员：导出/导入/清空
+    document.getElementById('btnExportAll')?.addEventListener('click', () => {
+      const payload = {
+        version: 1,
+        exportedAt: Date.now(),
+        bank: loadBank(),
+        wrong: loadWrong(),
+        settings: loadSettings(),
+        history: loadHistory()
+      };
+      downloadJson(`webtest-export-${new Date().toISOString().slice(0,10)}.json`, payload);
+      showToast('已导出');
+    });
+
+    document.getElementById('btnImportData')?.addEventListener('click', () => {
+      document.getElementById('importFileInput')?.click();
+    });
+
+    // 管理员：题库管理区 - 仅上传题库（JSON）
+    document.getElementById('btnAdminImportBank')?.addEventListener('click', () => {
+      document.getElementById('adminBankFileInput')?.click();
+    });
+
+    document.getElementById('adminBankFileInput')?.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        const bankIn = Array.isArray(payload?.bank) ? payload.bank : null;
+        if (!bankIn) {
+          showToast('导入失败：缺少 bank 字段');
+          return;
+        }
+        const bankNorm = bankIn.map(normalizeBankItem).filter(Boolean);
+        const merged = mergeById(loadBank(), bankNorm);
+        saveBank(merged);
+        refreshAllLists();
+        refreshAdminPanel?.();
+        showToast('题库已导入（合并）');
+      } catch {
+        showToast('导入失败：JSON 格式错误');
+      } finally {
+        e.target.value = '';
+      }
+    });
+
+    document.getElementById('importFileInput')?.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        importAllDataMerge(payload);
+        showToast('已导入（合并）');
+      } catch {
+        showToast('导入失败：JSON 格式错误');
+      } finally {
+        e.target.value = '';
+      }
+    });
+
+    document.getElementById('btnClearAllData')?.addEventListener('click', () => {
+      const ok = confirm('确定清空所有数据吗？（题库/错题/设置/统计记录）');
+      if (!ok) return;
+      localStorage.removeItem(LS_KEYS.bank);
+      localStorage.removeItem(LS_KEYS.wrong);
+      localStorage.removeItem(LS_KEYS.settings);
+      localStorage.removeItem(LS_KEYS.history);
+      refreshAllLists();
+      refreshAdminPanel();
+      showToast('已清空');
+    });
+
+
+    // 管理员：题库列表（搜索/筛选/删除）
+    function renderAdminQuestionList() {
+      const wrap = document.getElementById('adminQuestionList');
+      if (!wrap) return;
+      const type = document.getElementById('adminQuestionFilter')?.value || 'all';
+      const kw = (document.getElementById('adminSearchQuestions')?.value || '').trim().toLowerCase();
+
+      let list = loadBank();
+      if (type !== 'all') list = list.filter(x => x.type === type);
+      if (kw) {
+        list = list.filter(x => {
+          const s = x.type === 'reading'
+            ? `${x.passage || ''} ${x.questions?.map(q => q.stem).join(' ') || ''}`
+            : `${x.stem || ''} ${Object.values(x.options || {}).join(' ')}`;
+          return s.toLowerCase().includes(kw);
+        });
+      }
+
+      if (!list.length) {
+        wrap.innerHTML = `<div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-600 dark:border-white/10 dark:bg-white/5 dark:text-ink-300">暂无数据</div>`;
+        return;
+      }
+
+      wrap.innerHTML = list.slice().reverse().map(q => {
+        const badge = q.type === 'reading' ? '阅读题' : '计算题';
+        const title = q.type === 'reading' ? (q.passage || '').slice(0, 38) : (q.stem || '').slice(0, 38);
+        return `
+          <div class="rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="font-semibold">${escapeHtml(badge)} · ${escapeHtml(title || '（无标题）')}</div>
+                <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">${new Date(q.createdAt).toLocaleString()}</div>
+              </div>
+              <button class="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 transition hover:scale-[1.01] hover:bg-red-50 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400" data-del-bank="${escapeHtml(q.id)}">删除</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      wrap.querySelectorAll('[data-del-bank]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-del-bank');
+          const ok = confirm('确定删除这道题吗？');
+          if (!ok) return;
+          const bank = loadBank().filter(x => x.id !== id);
+          saveBank(bank);
+          refreshAllLists();
+          refreshAdminPanel();
+          showToast('已删除');
+        });
+      });
+    }
+
+    document.getElementById('adminQuestionFilter')?.addEventListener('change', renderAdminQuestionList);
+    document.getElementById('adminSearchQuestions')?.addEventListener('input', renderAdminQuestionList);
+
+    // 管理员：错题列表（筛选/标记掌握=删除）
+
+    // 管理员：统计
+    function calcAccuracy(kind) {
+      const h = loadHistory().filter(x => x.kind === kind);
+      if (!h.length) return null;
+      const ok = h.filter(x => x.ok).length;
+      return Math.round((ok / h.length) * 100);
+    }
+
+    function updateAdminStats() {
+      const p = document.getElementById('statPracticeAcc');
+      const e = document.getElementById('statExamAcc');
+      const pAcc = calcAccuracy('practice');
+      const eAcc = calcAccuracy('exam');
+      if (p) p.textContent = pAcc == null ? '—' : `${pAcc}%`;
+      if (e) e.textContent = eAcc == null ? '—' : `${eAcc}%`;
+      drawTrend7d();
+    }
+
+    function drawTrend7d() {
+      const canvas = document.getElementById('statTrendCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const now = new Date();
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        d.setHours(0, 0, 0, 0);
+        days.push(d);
+      }
+
+      const hist = loadHistory();
+      const counts = days.map(d => {
+        const start = d.getTime();
+        const end = start + 24 * 3600 * 1000;
+        return hist.filter(x => x.at >= start && x.at < end).length;
+      });
+
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const max = Math.max(1, ...counts);
+      const pad = 10;
+      const barW = (w - pad * 2) / counts.length;
+
+      ctx.fillStyle = 'rgba(109,94,241,0.85)';
+      counts.forEach((c, i) => {
+        const bh = ((h - pad * 2) * c) / max;
+        const x = pad + i * barW + 6;
+        const y = h - pad - bh;
+        const bw = Math.max(6, barW - 12);
+        ctx.fillRect(x, y, bw, bh);
+      });
+
+      ctx.fillStyle = 'rgba(100,116,139,0.85)';
+      ctx.font = '10px system-ui';
+      counts.forEach((c, i) => {
+        const x = pad + i * barW + 6;
+        ctx.fillText(String(c), x, pad + 10);
+      });
+    }
+
+    // 管理员：设置 UI 同步与保存
+    function syncAdminSettingsUI() {
+      const s = loadSettings();
+      const r = document.getElementById('settingReadingTime');
+      const c = document.getElementById('settingCalcTime');
+      const er = document.getElementById('settingReadingExamTime');
+      const ec = document.getElementById('settingCalcExamTime');
+      if (r) r.value = s.practice.readingSec;
+      if (c) c.value = s.practice.calcSec;
+      if (er) er.value = s.exam.readingMin;
+      if (ec) ec.value = s.exam.calcMin;
+
+      // 反馈筛选默认值
+      const f = document.getElementById('adminFeedbackFilter');
+      if (f && !f.value) f.value = 'all';
+    }
+
+    function getAnswerChoicesByType(type) {
+      return type === 'calc' ? ['A', 'B', 'C', 'D'] : ['A', 'B', 'C'];
+    }
+
+    function getExistingFeedback(qKey, type) {
+      const list = loadFeedback();
+      const hit = list.find(x => String(x.qKey) === String(qKey) && String(x.type) === String(type));
+      return hit ? String(hit.suggest || '') : '';
+    }
+
+    function renderFeedbackChoiceButtons({ qKey, type }) {
+      const choices = getAnswerChoicesByType(type);
+      const existing = getExistingFeedback(qKey, type);
+      return `
+        <div class="mt-2 flex flex-wrap gap-2" data-feedback-group="1" data-feedback-qkey="${escapeHtml(qKey)}" data-feedback-type="${escapeHtml(type)}" data-feedback-existing="${escapeHtml(existing)}">
+          ${choices.map(k => {
+            const isPicked = existing && existing === k;
+            const disabled = !!existing;
+            const base = disabled
+              ? (isPicked ? 'bg-accent-500 text-white border-accent-500' : 'bg-ink-100 text-ink-500 border-ink-200 dark:bg-white/10 dark:text-ink-400 dark:border-white/10')
+              : 'bg-white text-ink-700 border-ink-200 dark:bg-white/5 dark:text-ink-100 dark:border-white/10';
+            const hover = disabled ? '' : 'transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50';
+            return `
+              <button type="button" ${disabled ? 'disabled' : ''} class="rounded-xl border px-3 py-2 text-xs font-semibold ${base} ${hover}" data-feedback-qkey="${escapeHtml(qKey)}" data-feedback-type="${escapeHtml(type)}" data-feedback-suggest="${k}">
+                ${isPicked ? `已反馈：${k}` : `我认为答案是 ${k}`}
+              </button>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function lockFeedbackGroup(root, qKey, type, picked) {
+      const groupSelector = `[data-feedback-group][data-feedback-qkey="${CSS.escape(String(qKey))}"][data-feedback-type="${CSS.escape(String(type))}"]`;
+      const group = root.querySelector(groupSelector);
+      if (!group) return;
+      group.querySelectorAll('button[data-feedback-suggest]').forEach(btn => {
+        const s = btn.getAttribute('data-feedback-suggest');
+        btn.disabled = true;
+        if (s === picked) {
+          btn.textContent = `已反馈：${picked}`;
+          btn.className = 'rounded-xl border px-3 py-2 text-xs font-semibold bg-accent-500 text-white border-accent-500';
+        } else {
+          btn.textContent = `我认为答案是 ${s}`;
+          btn.className = 'rounded-xl border px-3 py-2 text-xs font-semibold bg-ink-100 text-ink-500 border-ink-200 dark:bg-white/10 dark:text-ink-400 dark:border-white/10';
+        }
+      });
+    }
+
+    function wireFeedbackButtons(root) {
+      if (!root) return;
+
+      // 初始化：若已有反馈，锁定按钮组
+      root.querySelectorAll('[data-feedback-group]').forEach(group => {
+        const qKey = group.getAttribute('data-feedback-qkey');
+        const type = group.getAttribute('data-feedback-type');
+        const existing = group.getAttribute('data-feedback-existing');
+        if (qKey && type && existing) {
+          lockFeedbackGroup(root, qKey, type, existing);
+        }
+      });
+
+      root.querySelectorAll('button[data-feedback-qkey]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const qKey = btn.getAttribute('data-feedback-qkey');
+          const type = btn.getAttribute('data-feedback-type');
+          const suggest = btn.getAttribute('data-feedback-suggest');
+          if (!qKey || !type || !suggest) return;
+
+          // 若本题已反馈，不再允许再次点击
+          const existing = getExistingFeedback(qKey, type);
+          if (existing) {
+            showToast(`已反馈：${existing}`);
+            lockFeedbackGroup(root, qKey, type, existing);
+            return;
+          }
+
+          addFeedback({ qKey, type, suggest });
+          showToast(`已反馈：${suggest}`);
+          lockFeedbackGroup(root, qKey, type, suggest);
+          refreshAdminPanel?.();
+        });
+      });
+    }
+
+    function renderAdminFeedbackList() {
+      const wrap = document.getElementById('adminFeedbackList');
+      if (!wrap) return;
+
+      const filter = document.getElementById('adminFeedbackFilter')?.value || 'all';
+      const list = loadFeedback().filter(x => filter === 'all' ? true : x.type === filter);
+
+      if (!list.length) {
+        wrap.innerHTML = `<div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-600 dark:border-white/10 dark:bg-white/5 dark:text-ink-300">暂无反馈</div>`;
+        return;
+      }
+
+      // 聚合：qKey -> counts
+      const agg = new Map();
+      list.forEach(x => {
+        if (!x.qKey) return;
+        const key = String(x.qKey);
+        if (!agg.has(key)) agg.set(key, { type: x.type, counts: {} });
+        const row = agg.get(key);
+        row.type = x.type;
+        row.counts[x.suggest] = (row.counts[x.suggest] || 0) + 1;
+      });
+
+      const rows = Array.from(agg.entries());
+
+      function findQuestionDetailByKey(qKey, type) {
+        const bank = loadBank();
+        if (type === 'calc') {
+          const item = bank.find(x => x && x.type === 'calc' && x.id === qKey);
+          if (!item) return null;
+          return {
+            kind: 'calc',
+            title: item.stem || '',
+            answer: item.answer || '',
+            explain: item.explain || '',
+            imageDataUrl: item.imageDataUrl || ''
+          };
+        }
+
+        // reading: groupId#idx
+        const parts = String(qKey).split('#');
+        const groupId = parts[0];
+        const idx = Number(parts[1]);
+        const group = bank.find(x => x && x.type === 'reading' && x.id === groupId);
+        if (!group || !Array.isArray(group.questions) || !Number.isFinite(idx) || idx < 0 || idx > 3) return null;
+        const q = group.questions[idx];
+        return {
+          kind: 'reading',
+          passage: group.passage || '',
+          title: q?.stem || '',
+          answer: q?.answer || '',
+          explain: group.explain || ''
+        };
+      }
+
+      wrap.innerHTML = rows.map(([qKey, data]) => {
+        const choices = getAnswerChoicesByType(data.type);
+        const countsText = choices.map(k => `${k}:${data.counts[k] || 0}`).join('  ');
+        const detail = findQuestionDetailByKey(qKey, data.type);
+        const currentAns = detail?.answer ? `当前答案：${escapeHtml(detail.answer)}` : '当前答案：—';
+
+        const detailHtml = detail ? (
+          detail.kind === 'calc'
+            ? `
+              <div class="mt-2 rounded-2xl border border-ink-200 bg-ink-50 p-3 text-xs text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+                <div class="font-semibold">题干</div>
+                <div class="mt-1 whitespace-pre-wrap">${escapeHtml(detail.title || '')}</div>
+                <div class="mt-2">${currentAns}</div>
+                <div class="mt-2 ${detail.explain ? '' : 'hidden'}"><span class="font-semibold">解析：</span><span class="whitespace-pre-wrap">${escapeHtml(detail.explain || '')}</span></div>
+                ${detail.imageDataUrl ? `<img src="${escapeHtml(detail.imageDataUrl)}" class="mt-2 w-full rounded-2xl border border-ink-200 dark:border-white/10" alt="题目图片" />` : ''}
+              </div>
+            `
+            : `
+              <div class="mt-2 rounded-2xl border border-ink-200 bg-ink-50 p-3 text-xs text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+                <div class="font-semibold">长文</div>
+                <div class="mt-1 whitespace-pre-wrap">${escapeHtml(detail.passage || '')}</div>
+                <div class="mt-3 font-semibold">小题</div>
+                <div class="mt-1 whitespace-pre-wrap">${escapeHtml(detail.title || '')}</div>
+                <div class="mt-2">${currentAns}</div>
+                <div class="mt-2 ${detail.explain ? '' : 'hidden'}"><span class="font-semibold">解析：</span><span class="whitespace-pre-wrap">${escapeHtml(detail.explain || '')}</span></div>
+              </div>
+            `
+        ) : `
+          <div class="mt-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/15 dark:text-amber-200">未在题库中找到原题（可能已删除）。</div>
+        `;
+
+        return `
+          <details class="mb-2 rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+            <summary class="cursor-pointer select-none">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                  <div class="font-semibold">${escapeHtml(data.type)} · ${escapeHtml(qKey)}</div>
+                  <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">${escapeHtml(countsText)} · ${currentAns}</div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  ${choices.map(k => `
+                    <button type="button" class="rounded-xl bg-accent-500 px-3 py-2 text-xs font-semibold text-white transition hover:bg-accent-600" data-admin-set-answer="1" data-admin-qkey="${escapeHtml(qKey)}" data-admin-type="${escapeHtml(data.type)}" data-admin-answer="${k}">
+                      改为 ${k}
+                    </button>
+                  `).join('')}
+                </div>
+              </div>
+            </summary>
+            ${detailHtml}
+          </details>
+        `;
+      }).join('');
+
+      wrap.querySelectorAll('[data-admin-set-answer]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const qKey = btn.getAttribute('data-admin-qkey');
+          const type = btn.getAttribute('data-admin-type');
+          const ans = btn.getAttribute('data-admin-answer');
+          if (!qKey || !type || !ans) return;
+          const ok = confirm(`确定把该题标准答案改为 ${ans} 吗？`);
+          if (!ok) return;
+
+          if (type === 'calc') {
+            const bank = loadBank();
+            const idx = bank.findIndex(x => x.id === qKey && x.type === 'calc');
+            if (idx >= 0) {
+              bank[idx].answer = ans;
+              saveBank(bank);
+              showToast('已修改');
+              refreshAllLists();
+              refreshAdminPanel();
+            } else {
+              showToast('未找到题目');
+            }
+            return;
+          }
+
+          // reading: groupId#subIndex
+          const [groupId, subIdxStr] = String(qKey).split('#');
+          const subIdx = Number(subIdxStr);
+          const bank = loadBank();
+          const gIdx = bank.findIndex(x => x.id === groupId && x.type === 'reading');
+          if (gIdx < 0) {
+            showToast('未找到题目');
+            return;
+          }
+          if (!Number.isFinite(subIdx) || subIdx < 0 || subIdx > 3) {
+            showToast('题目索引错误');
+            return;
+          }
+          bank[gIdx].questions[subIdx].answer = ans;
+          saveBank(bank);
+          showToast('已修改');
+          refreshAllLists();
+          refreshAdminPanel();
+        });
+      });
+    }
+
+    document.getElementById('adminFeedbackFilter')?.addEventListener('change', renderAdminFeedbackList);
+
+    document.getElementById('btnClearFeedback')?.addEventListener('click', () => {
+      const ok = confirm('确定清空所有反馈吗？');
+      if (!ok) return;
+      saveFeedback([]);
+      renderAdminFeedbackList();
+      showToast('已清空');
+    });
+
+    document.getElementById('btnSaveSettings')?.addEventListener('click', () => {
+      const s = loadSettings();
+      const r = Number(document.getElementById('settingReadingTime')?.value || s.practice.readingSec);
+      const c = Number(document.getElementById('settingCalcTime')?.value || s.practice.calcSec);
+      const er = Number(document.getElementById('settingReadingExamTime')?.value || s.exam.readingMin);
+      const ec = Number(document.getElementById('settingCalcExamTime')?.value || s.exam.calcMin);
+
+      saveSettings({
+        practice: { readingSec: Math.max(10, Math.min(300, r)), calcSec: Math.max(10, Math.min(300, c)) },
+        exam: { readingMin: Math.max(5, Math.min(120, er)), calcMin: Math.max(5, Math.min(120, ec)) }
+      });
+      showToast('已保存');
+    });
+
+    // ===== 题库/错题：渲染与统计 =====
+    function refreshStats() {
+      const bank = loadBank();
+      const wrong = loadWrong();
+      const lang = normalizeLang(getLang());
+      const statQ = document.getElementById('statQ');
+      const statW = document.getElementById('statW');
+      const statL = document.getElementById('statL');
+      if (statQ) statQ.textContent = String(bank.length);
+      if (statW) statW.textContent = String(wrong.length);
+      if (statL) statL.textContent = lang;
+
+      // 顶部按钮文字也做翻译（只翻界面）
+      // 这里简单处理：不改你上传题目的文本
+      const homeUpload = document.querySelector('#btnHomeUpload .text-base');
+      const homePractice = document.querySelector('#btnHomePractice .text-base');
+      const homeExam = document.querySelector('#btnHomeExam .text-base');
+      const homeReview = document.querySelector('#btnHomeReview .text-base');
+      if (homeUpload) homeUpload.textContent = t('upload.title');
+      if (homePractice) homePractice.textContent = t('practice.title');
+      if (homeExam) homeExam.textContent = t('exam.title');
+      if (homeReview) homeReview.textContent = t('review.title');
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function renderBank() {
+      const bank = loadBank();
+      const el = document.getElementById('bankList');
+      if (!el) return;
+      if (!bank.length) {
+        el.innerHTML = `<div class="text-xs text-ink-500 dark:text-ink-400">（${t('bank.title')}：0）</div>`;
+        return;
+      }
+      const items = bank.slice().reverse().map(q => {
+        const badge = q.type === 'reading' ? '阅读题' : '计算题';
+        const title = q.type === 'reading' ? (q.passage || '').slice(0, 28) : (q.stem || '').slice(0, 28);
+        return `
+          <div class="mt-2 rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+            <div class="flex items-center justify-between gap-3">
+              <div class="font-semibold">${escapeHtml(badge)} · ${escapeHtml(title || '（无标题）')}</div>
+              <div class="text-xs text-ink-500 dark:text-ink-400">${new Date(q.createdAt).toLocaleString()}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      el.innerHTML = items;
+    }
+
+    function renderWrong() {
+      const wrong = loadWrong();
+      const el = document.getElementById('wrongList');
+      if (!el) return;
+      if (!wrong.length) {
+        el.innerHTML = `<div class="rounded-2xl border border-ink-200 bg-white p-4 text-sm text-ink-600 dark:border-white/10 dark:bg-white/5 dark:text-ink-300">暂无错题</div>`;
+        return;
+      }
+      el.innerHTML = wrong.slice().reverse().map(w => {
+        const badge = w.type === 'reading' ? '阅读题' : '计算题';
+        const title = w.type === 'reading' ? (w.passage || '').slice(0, 28) : (w.stem || '').slice(0, 28);
+        return `
+          <div class="mb-3 rounded-2xl border border-ink-200 bg-white p-4 text-sm text-ink-700 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="font-semibold">${escapeHtml(badge)} · ${escapeHtml(title || '（无标题）')}</div>
+                <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">做错时间：${new Date(w.at).toLocaleString()}</div>
+              </div>
+              <button class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-del-wrong="${escapeHtml(w.id)}">删除</button>
+            </div>
+            <details class="mt-3">
+              <summary class="cursor-pointer text-xs font-semibold text-ink-500 dark:text-ink-400">展开详情</summary>
+              <div class="mt-2 text-sm">${escapeHtml(w.detail || '')}</div>
+            </details>
+          </div>
+        `;
+      }).join('');
+
+      el.querySelectorAll('[data-del-wrong]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-del-wrong');
+          const list = loadWrong().filter(x => x.id !== id);
+          saveWrong(list);
+          renderWrong();
+          refreshStats();
+          showToast('已删除');
+        });
+      });
+    }
+
+    function refreshAllLists() {
+      renderBank();
+      renderWrong();
+      refreshStats();
+    }
+
+    // ===== 上传题目：阅读题/计算题 =====
+    const btnTypeReading = document.getElementById('btnTypeReading');
+    const btnTypeCalc = document.getElementById('btnTypeCalc');
+    const formReading = document.getElementById('formReading');
+    const formCalc = document.getElementById('formCalc');
+
+    function setUploadType(type) {
+      if (type === 'reading') {
+        formReading.classList.remove('hidden');
+        formCalc.classList.add('hidden');
+        btnTypeReading.classList.add('bg-ink-50');
+        btnTypeCalc.classList.remove('bg-ink-50');
+      } else {
+        formReading.classList.add('hidden');
+        formCalc.classList.remove('hidden');
+        btnTypeCalc.classList.add('bg-ink-50');
+        btnTypeReading.classList.remove('bg-ink-50');
+      }
+    }
+
+    btnTypeReading?.addEventListener('click', () => setUploadType('reading'));
+    btnTypeCalc?.addEventListener('click', () => setUploadType('calc'));
+
+    document.getElementById('btnAddReading')?.addEventListener('click', () => {
+      const passage = (document.getElementById('readingText').value || '').trim();
+      const qs = [1,2,3,4].map(i => (document.getElementById(`rq${i}`).value || '').trim());
+      const ans = [1,2,3,4].map(i => (document.getElementById(`ra${i}`).value || 'A').trim());
+      const explain = (document.getElementById('readingExplain').value || '').trim();
+      const hint = document.getElementById('readingHint');
+
+      if (!passage) {
+        hint.textContent = '请先填写长文';
+        return;
+      }
+      if (qs.some(x => !x)) {
+        hint.textContent = '请填写 4 个小问';
+        return;
+      }
+
+      const item = {
+        id: uid(),
+        type: 'reading',
+        createdAt: Date.now(),
+        passage,
+        questions: qs.map((q, idx) => ({
+          stem: q,
+          optionsFixed: true,
+          options: {
+            A: '文脈の論理から明らかに正しい。または正しい内容を含んでいる。',
+            B: '文脈の論理から明らかに間違っている。または間違った内容を含んでいる。',
+            C: '問題文の内容だけからでは、設問文は論理的に導けない'
+          },
+          answer: ans[idx]
+        })),
+        explain
+      };
+
+      const bank = loadBank();
+      bank.push(item);
+      saveBank(bank);
+
+      hint.textContent = '';
+      showToast('已添加阅读题');
+      refreshAllLists();
+
+      // 添加成功后清空表单，便于继续录入
+      document.getElementById('readingText').value = '';
+      [1,2,3,4].forEach(i => {
+        document.getElementById(`rq${i}`).value = '';
+        document.getElementById(`ra${i}`).value = 'A';
+      });
+      document.getElementById('readingExplain').value = '';
+      hint.textContent = '';
+
+      // 光标回到长文输入框
+      document.getElementById('readingText').focus();
+    });
+
+    // 计算题图片 -> base64
+    let calcImageDataUrl = '';
+    const calcImage = document.getElementById('calcImage');
+    const calcPreviewWrap = document.getElementById('calcPreviewWrap');
+    const calcPreviewImg = document.getElementById('calcPreviewImg');
+
+    calcImage?.addEventListener('change', () => {
+      const file = calcImage.files && calcImage.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        calcImageDataUrl = String(reader.result || '');
+        if (calcPreviewImg) calcPreviewImg.src = calcImageDataUrl;
+        if (calcPreviewWrap) calcPreviewWrap.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('btnAddCalc')?.addEventListener('click', () => {
+      const hint = document.getElementById('calcHint');
+      const stem = (document.getElementById('calcStem').value || '').trim();
+      const A = (document.getElementById('cA').value || '').trim();
+      const B = (document.getElementById('cB').value || '').trim();
+      const C = (document.getElementById('cC').value || '').trim();
+      const D = (document.getElementById('cD').value || '').trim();
+      const answer = (document.getElementById('calcAnswer').value || 'A').trim();
+      const explain = (document.getElementById('calcExplain').value || '').trim();
+
+      if (!calcImageDataUrl) {
+        hint.textContent = '请先上传题目图片';
+        return;
+      }
+      if (!stem || !A || !B || !C || !D) {
+        hint.textContent = '请填写题干与四个选项';
+        return;
+      }
+
+      const item = {
+        id: uid(),
+        type: 'calc',
+        createdAt: Date.now(),
+        imageDataUrl: calcImageDataUrl,
+        stem,
+        options: { A, B, C, D },
+        answer,
+        explain
+      };
+
+      const bank = loadBank();
+      bank.push(item);
+      saveBank(bank);
+
+      hint.textContent = '';
+      showToast('已添加计算题');
+      refreshAllLists();
+
+      // 添加成功后清空表单并隐藏预览，便于继续录入
+      calcImageDataUrl = '';
+      document.getElementById('calcImage').value = '';
+      if (calcPreviewImg) calcPreviewImg.src = '';
+      if (calcPreviewWrap) calcPreviewWrap.classList.add('hidden');
+      document.getElementById('calcStem').value = '';
+      document.getElementById('cA').value = '';
+      document.getElementById('cB').value = '';
+      document.getElementById('cC').value = '';
+      document.getElementById('cD').value = '';
+      document.getElementById('calcAnswer').value = 'A';
+      document.getElementById('calcExplain').value = '';
+
+      // 光标回到题干
+      document.getElementById('calcStem').focus();
+    });
+
+    document.getElementById('btnClearBank')?.addEventListener('click', () => {
+      if (!confirm('确定清空题库吗？')) return;
+      saveBank([]);
+      refreshAllLists();
+      showToast('题库已清空');
+    });
+
+    // ===== 练习模式（实现核心规则） =====
+    let practiceTimer = null;
+    let practiceDeadline = 0;
+    let practiceState = null;
+
+    function stopPracticeTimer() {
+      if (practiceTimer) clearInterval(practiceTimer);
+      practiceTimer = null;
+      practiceDeadline = 0;
+    }
+
+    function formatSec(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      return `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
+    }
+
+    function startCountdown(seconds, onTimeout) {
+      stopPracticeTimer();
+      practiceDeadline = Date.now() + seconds * 1000;
+      const el = document.getElementById('practiceTimer');
+      function tick() {
+        const remain = (practiceDeadline - Date.now()) / 1000;
+        if (el) el.textContent = formatSec(remain);
+        if (remain <= 0) {
+          stopPracticeTimer();
+          onTimeout?.();
+        }
+      }
+      tick();
+      practiceTimer = setInterval(tick, 200);
+    }
+
+    function pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function getBankByType(type) {
+      const bank = loadBank();
+      if (type === 'reading') return bank.filter(x => x.type === 'reading');
+      return bank.filter(x => x.type === 'calc');
+    }
+
+    function addWrongFromPractice(q, detail) {
+      const wrong = loadWrong();
+      wrong.push({
+        id: uid(),
+        at: Date.now(),
+        type: q.type,
+        passage: q.passage,
+        stem: q.stem,
+        detail
+      });
+      saveWrong(wrong);
+
+      // 练习记录（用于统计）
+      addHistoryEvent({
+        kind: 'practice',
+        type: q.type,
+        ok: false,
+        at: Date.now()
+      });
+    }
+
+    function renderPracticeReadingQuestion(group, idx) {
+      const q = group.questions[idx];
+      const body = document.getElementById('practiceBody');
+      const title = document.getElementById('practiceTitle');
+      title.textContent = `阅读练习（第 ${idx + 1} / 4 题）`;
+
+      const options = [
+        { k: 'A', text: `A. ${q.options.A}` },
+        { k: 'B', text: `B. ${q.options.B}` },
+        { k: 'C', text: `C. ${q.options.C}` }
+      ];
+
+      body.innerHTML = `
+        <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+          <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">长文</div>
+          <div class="mt-2 whitespace-pre-wrap">${escapeHtml(group.passage)}</div>
+        </div>
+        <div class="mt-3 rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+          <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">题目</div>
+          <div class="mt-2 text-sm font-semibold">${escapeHtml(q.stem)}</div>
+          <div class="mt-3 grid gap-2">
+            ${options.map(o => `
+              <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
+                <input type="radio" name="practiceAns" value="${o.k}" class="mt-1" />
+                <div class="text-sm">${escapeHtml(o.text)}</div>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderPracticeCalcQuestion(item) {
+      const body = document.getElementById('practiceBody');
+      const title = document.getElementById('practiceTitle');
+      title.textContent = `计算练习（1题）`;
+      body.innerHTML = `
+        <div class="rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+          <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">题目图片</div>
+          <div class="mt-2">
+            <img src="${escapeHtml(item.imageDataUrl)}" alt="题目图片" class="w-full rounded-2xl border border-ink-200 dark:border-white/10" loading="lazy" />
+          </div>
+        </div>
+        <div class="mt-3 rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+          <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">题干</div>
+          <div class="mt-2 text-sm font-semibold">${escapeHtml(item.stem)}</div>
+          <div class="mt-3 grid gap-2">
+            ${['A','B','C','D'].map(k => `
+              <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
+                <input type="radio" name="practiceAns" value="${k}" class="mt-1" />
+                <div class="text-sm">${k}. ${escapeHtml(item.options[k])}</div>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function showPracticeStage(show) {
+      const s = document.getElementById('practiceStage');
+      if (show) s.classList.remove('hidden');
+      else s.classList.add('hidden');
+    }
+
+    function resetPracticeUI() {
+      stopPracticeTimer();
+      showPracticeStage(false);
+      document.getElementById('practiceResult').classList.add('hidden');
+      document.getElementById('btnPracticeNext').classList.add('hidden');
+      document.getElementById('btnPracticeSubmit').classList.remove('hidden');
+      document.getElementById('btnPracticeSkipTop').classList.add('hidden');
+    }
+
+    function getSelectedAnswer() {
+      const el = document.querySelector('input[name="practiceAns"]:checked');
+      return el ? el.value : '';
+    }
+
+    function setPracticeStartActive(which) {
+      const btnR = document.getElementById('btnStartPracticeReading');
+      const btnC = document.getElementById('btnStartPracticeCalc');
+      if (!btnR || !btnC) return;
+
+      const makeActive = (btn) => {
+        btn.classList.remove('border-ink-200', 'bg-white', 'text-ink-700', 'hover:bg-ink-50', 'hover:border-ink-300');
+        btn.classList.add('bg-accent-500', 'text-white');
+      };
+      const makeIdle = (btn) => {
+        btn.classList.remove('bg-accent-500', 'text-white');
+        btn.classList.add('border-ink-200', 'bg-white', 'text-ink-700', 'hover:bg-ink-50', 'hover:border-ink-300');
+      };
+
+      // 默认都无色，点击哪个就高亮哪个
+      makeIdle(btnR);
+      makeIdle(btnC);
+      if (which === 'reading') makeActive(btnR);
+      if (which === 'calc') makeActive(btnC);
+    }
+
+    // 初始：两个都无色
+    setPracticeStartActive('none');
+
+    document.getElementById('btnStartPracticeReading')?.addEventListener('click', () => {
+      setPracticeStartActive('reading');
+      const pool = getBankByType('reading');
+      const hint = document.getElementById('practiceHint');
+      if (!pool.length) {
+        hint.textContent = '题库里没有阅读题，请先上传。';
+        return;
+      }
+      hint.textContent = '';
+
+      // 阅读练习：确保提交按钮状态已重置（允许重复练习）
+      const submitBtn = document.getElementById('btnPracticeSubmit');
+      const nextBtn = document.getElementById('btnPracticeNext');
+      submitBtn.disabled = false;
+      submitBtn.textContent = t('common.submit') || '提交';
+      submitBtn.className = 'rounded-xl bg-accent-500 px-3 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] hover:bg-accent-600';
+      nextBtn.classList.add('hidden');
+
+      const group = pickRandom(pool);
+      practiceState = { mode: 'reading', group, idx: 0, answers: [], stage: 'answering' };
+      showPracticeStage(true);
+      renderPracticeReadingQuestion(group, 0);
+
+      // 初始按钮：第1-3题显示“下一题”，第4题显示“提交”
+      syncPracticeButtons();
+      document.getElementById('practiceResult').classList.add('hidden');
+
+      function finalizeReadingGroupByTimeout() {
+        // 补齐未作答题为“未选=错误”并收录错题
+        for (let i = 0; i < 4; i++) {
+          if (practiceState.answers[i]) continue;
+          const q = group.questions[i];
+          const correct = q.answer;
+          practiceState.answers[i] = { your: '', correct, ok: false, stem: q.stem };
+          addWrongFromPractice(
+            { type: 'reading', passage: group.passage },
+            `长文：${group.passage}\n题目：${q.stem}\n你的选择：未选\n正确答案：${correct}\n解析：${group.explain || '（无）'}`
+          );
+        }
+
+        practiceState.stage = 'review';
+        const resultEl = document.getElementById('practiceResult');
+        resultEl.innerHTML = buildReadingGroupSummaryHTML(group, practiceState.answers);
+        // 阅读题反馈：按 groupId#subIndex（0-3）
+        const fbWrap = document.createElement('div');
+        fbWrap.innerHTML = `
+          <details class="mt-3 rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+            <summary class="cursor-pointer select-none font-semibold">答案反馈（本机）</summary>
+            <div class="mt-2 border-t border-ink-200 pt-2">
+              <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">如果你认为某小题标准答案有误，可在下方选择你认为正确的选项。</div>
+              <div class="mt-3 grid gap-2">
+                ${[0,1,2,3].map(i => {
+                  const qKey = `${escapeHtml(practiceState.group.id)}#${i}`;
+                  return `
+                    <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-xs text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+                      <div class="font-semibold">第 ${i+1} 题</div>
+                      ${renderFeedbackChoiceButtons({ qKey, type: 'reading' })}
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          </details>
+        `;
+        resultEl.appendChild(fbWrap);
+        wireFeedbackButtons(resultEl);
+
+        resultEl.classList.remove('hidden');
+        syncPracticeButtons();
+        refreshAllLists();
+        showToast('时间到，已自动结算');
+      }
+
+      // 整组 150 秒倒计时
+      startCountdown(150, finalizeReadingGroupByTimeout);
+    });
+
+    document.getElementById('btnStartPracticeCalc')?.addEventListener('click', () => {
+      setPracticeStartActive('calc');
+      const pool = getBankByType('calc');
+      const hint = document.getElementById('practiceHint');
+      if (!pool.length) {
+        hint.textContent = '题库里没有计算题，请先上传。';
+        return;
+      }
+      hint.textContent = '';
+
+      const item = pickRandom(pool);
+      practiceState = { mode: 'calc', item, submitted: false };
+      showPracticeStage(true);
+      renderPracticeCalcQuestion(item);
+
+      // 计算练习：确保提交按钮可见且可点击
+      const submitBtn = document.getElementById('btnPracticeSubmit');
+      const nextBtn = document.getElementById('btnPracticeNext');
+      const resultEl = document.getElementById('practiceResult');
+      submitBtn.disabled = false;
+      submitBtn.textContent = t('common.submit') || '提交';
+      submitBtn.className = 'rounded-xl bg-accent-500 px-3 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] hover:bg-accent-600';
+      submitBtn.classList.remove('hidden');
+      nextBtn.classList.add('hidden');
+      resultEl.classList.add('hidden');
+
+      startCountdown(40, () => {
+        showToast('时间到');
+        document.getElementById('btnPracticeSubmit').click();
+      });
+    });
+
+    document.getElementById('btnPracticeExitTop')?.addEventListener('click', () => {
+      practiceState = null;
+      resetPracticeUI();
+      showToast('已退出');
+    });
+
+    document.getElementById('btnPracticeSkipTop')?.addEventListener('click', () => {
+      if (!practiceState) return;
+      // 阅读练习：跳过整组；计算练习：跳过当前题
+      practiceState = null;
+      resetPracticeUI();
+      document.getElementById('practiceHint').textContent = '已跳过';
+      showToast('已跳过');
+    });
+
+    // 练习-阅读：每题必须选择答案；前3题按钮为“下一题”，第4题按钮为“提交”
+    function syncPracticeButtons() {
+      const nextBtn = document.getElementById('btnPracticeNext');
+      const submitBtn = document.getElementById('btnPracticeSubmit');
+      const resultEl = document.getElementById('practiceResult');
+      if (!practiceState || practiceState.mode !== 'reading') {
+        // 计算练习保留原逻辑
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+        return;
+      }
+
+      // 结果展示阶段：只显示“提交”（此时表示“提交整组/结束并展示结果”）
+      if (practiceState.stage === 'review') {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+        resultEl.classList.remove('hidden');
+        return;
+      }
+
+      // 作答阶段：前3题显示“下一题”，第4题显示“提交”
+      if (practiceState.idx < 3) {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      } else {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      }
+    }
+
+    function saveCurrentReadingAnswerOrWarn() {
+      const sel = getSelectedAnswer();
+      if (!sel) {
+        showToast('请先选择一个答案');
+        return null;
+      }
+
+      const { group, idx } = practiceState;
+      const q = group.questions[idx];
+      const correct = q.answer;
+      const ok = sel === correct;
+
+      practiceState.answers[idx] = { your: sel, correct, ok, stem: q.stem };
+
+      if (!ok) {
+        addWrongFromPractice(
+          { type: 'reading', passage: group.passage },
+          `长文：${group.passage}\n题目：${q.stem}\n你的选择：${sel}\n正确答案：${correct}\n解析：${group.explain || '（无）'}`
+        );
+      }
+
+      return sel;
+    }
+
+    function buildReadingGroupSummaryHTML(group, answers) {
+      const rightCount = answers.filter(a => a && a.ok).length;
+      const rate = Math.round((rightCount / 4) * 100);
+
+      return `
+        <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+          <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">长文（原文）</div>
+          <div class="mt-2 whitespace-pre-wrap">${escapeHtml(group.passage)}</div>
+        </div>
+        <div class="mt-3 rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+          <div class="font-semibold">本组结果：正确 ${rightCount}/4（${rate}%）</div>
+          <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">解析：${escapeHtml(group.explain || '（无）')}</div>
+        </div>
+        <div class="mt-3 grid gap-2">
+          ${[0,1,2,3].map(i => {
+            const a = answers[i] || { your:'', correct:'', ok:false, stem:'' };
+            return `
+              <div class="rounded-2xl border ${a.ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} p-3 text-sm ${a.ok ? 'text-green-800' : 'text-red-800'} dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+                <div class="font-semibold">第 ${i+1} 题：${escapeHtml(a.stem || '')}</div>
+                <div class="mt-1 text-xs">你的选择：${escapeHtml(a.your || '未选')} · 正确答案：${escapeHtml(a.correct)}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    document.getElementById('btnPracticeSubmit')?.addEventListener('click', () => {
+      if (!practiceState) return;
+      stopPracticeTimer();
+
+      const resultEl = document.getElementById('practiceResult');
+      const nextBtn = document.getElementById('btnPracticeNext');
+      const submitBtn = document.getElementById('btnPracticeSubmit');
+
+      // 阅读练习：此按钮只在第4题出现，点击后提交第4题并展示整组汇总
+      if (practiceState.mode === 'reading') {
+        if (practiceState.stage !== 'answering' || practiceState.idx !== 3) {
+          // 防御：不应该出现
+          return;
+        }
+
+        const sel = saveCurrentReadingAnswerOrWarn();
+        if (!sel) return;
+
+        // 进入汇总阶段
+        practiceState.stage = 'review';
+        submitBtn.classList.remove('hidden');
+        nextBtn.classList.add('hidden');
+
+        resultEl.innerHTML = buildReadingGroupSummaryHTML(practiceState.group, practiceState.answers);
+        // 阅读题反馈：按 groupId#subIndex（0-3）
+        const fbWrap = document.createElement('div');
+        fbWrap.innerHTML = `
+          <div class="mt-3 rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+            <div class="font-semibold">答案反馈（本机）</div>
+            <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">如果你认为某小题标准答案有误，可在下方选择你认为正确的选项。</div>
+            <div class="mt-3 grid gap-2">
+              ${[0,1,2,3].map(i => {
+                const qKey = `${escapeHtml(practiceState.group.id)}#${i}`;
+                return `
+                  <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-xs text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+                    <div class="font-semibold">第 ${i+1} 题</div>
+                    ${renderFeedbackChoiceButtons({ qKey, type: 'reading' })}
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+        resultEl.appendChild(fbWrap);
+        wireFeedbackButtons(resultEl);
+
+        resultEl.classList.remove('hidden');
+        showToast('本组阅读已完成');
+
+        refreshAllLists();
+
+        // 提交后按钮变灰“已提交”并禁用
+        submitBtn.disabled = true;
+        submitBtn.textContent = '已提交';
+        submitBtn.className = submitBtn.className
+          .replace('bg-accent-500', 'bg-ink-300')
+          .replace('hover:bg-accent-600', '')
+          .replace('text-white', 'text-ink-700');
+        return;
+      }
+
+      // 计算练习：单题提交并立即展示结果
+      const sel = getSelectedAnswer();
+      if (!sel) {
+        showToast('请先选择一个答案');
+        return;
+      }
+
+      const item = practiceState.item;
+      const correct = item.answer;
+      const ok = sel === correct;
+      if (!ok) {
+        addWrongFromPractice({ type: 'calc', stem: item.stem }, `题干：${item.stem}\n你的选择：${sel}\n正确答案：${correct}\n选项：A ${item.options.A} | B ${item.options.B} | C ${item.options.C} | D ${item.options.D}\n解析：${item.explain || '（无）'}`);
+      }
+
+      resultEl.classList.remove('hidden');
+      resultEl.innerHTML = `
+        <div class="rounded-2xl border ${ok ? 'border-green-200 bg-green-50 text-green-800' : 'border-red-200 bg-red-50 text-red-800'} p-3 text-sm dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+          <div class="font-semibold">${ok ? '回答正确' : '回答错误'}</div>
+          <div class="mt-1 text-xs">你的选择：${escapeHtml(sel)} · 正确答案：${escapeHtml(correct)}</div>
+          <div class="mt-2 text-xs">解析：${escapeHtml(item.explain || '（无）')}</div>
+        </div>
+      `;
+
+      // 计算题反馈：按 item.id
+      const fbWrap = document.createElement('div');
+      fbWrap.innerHTML = `
+        <details class="mt-3 rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+          <summary class="cursor-pointer select-none font-semibold">答案反馈（本机）</summary>
+          <div class="mt-2 border-t border-ink-200 pt-2">
+            <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">如果你认为标准答案有误，可选择你认为正确的选项。</div>
+            ${renderFeedbackChoiceButtons({ qKey: item.id, type: 'calc' })}
+          </div>
+        </details>
+      `;
+      resultEl.appendChild(fbWrap);
+      wireFeedbackButtons(resultEl);
+
+      submitBtn.classList.add('hidden');
+      nextBtn.classList.add('hidden');
+      showToast('计算练习已完成');
+
+      refreshAllLists();
+    });
+
+    document.getElementById('btnPracticeNext')?.addEventListener('click', () => {
+      if (!practiceState || practiceState.mode !== 'reading') return;
+      if (practiceState.stage !== 'answering') return;
+
+      // 必须先选择答案
+      const sel = saveCurrentReadingAnswerOrWarn();
+      if (!sel) return;
+
+      // 进入下一题
+      practiceState.idx += 1;
+      renderPracticeReadingQuestion(practiceState.group, practiceState.idx);
+
+      // 倒计时重置
+      startCountdown(50, () => {
+        showToast('时间到');
+        // 超时视为未选（但按你的规则必须选择，这里就提示并不让过，直接收录为未选并进入下一题）
+        // 实际处理：超时自动按未选提交并进入下一题/汇总
+        // 为保持体验，这里将超时视为未选并收录错题，然后自动进入下一题/提交
+        const forcedSel = '未选';
+        const { group, idx } = practiceState;
+        const q = group.questions[idx];
+        const correct = q.answer;
+        practiceState.answers[idx] = { your: '', correct, ok: false, stem: q.stem };
+        addWrongFromPractice(
+          { type: 'reading', passage: group.passage },
+          `长文：${group.passage}\n题目：${q.stem}\n你的选择：未选\n正确答案：${correct}\n解析：${group.explain || '（无）'}`
+        );
+
+        if (idx < 3) {
+          practiceState.idx += 1;
+          renderPracticeReadingQuestion(group, practiceState.idx);
+          startCountdown(50, arguments.callee);
+          syncPracticeButtons();
+        } else {
+          practiceState.stage = 'review';
+          const resultEl = document.getElementById('practiceResult');
+          resultEl.innerHTML = buildReadingGroupSummaryHTML(group, practiceState.answers);
+          resultEl.classList.remove('hidden');
+          syncPracticeButtons();
+          refreshAllLists();
+        }
+      });
+
+      // 按钮状态：前3题“下一题”，第4题“提交”
+      syncPracticeButtons();
+      document.getElementById('practiceResult').classList.add('hidden');
+      refreshAllLists();
+    });
+
+    // ===== 考试模式（核心：阅读10组35分钟 -> 计算30题25分钟） =====
+    let examTimerId = null;
+    let examDeadline = 0;
+    let examState = null;
+
+    function stopExamTimer() {
+      if (examTimerId) clearInterval(examTimerId);
+      examTimerId = null;
+      examDeadline = 0;
+    }
+
+    function startExamCountdown(seconds, onTimeout) {
+      stopExamTimer();
+      examDeadline = Date.now() + seconds * 1000;
+      const el = document.getElementById('examTimer');
+      function tick() {
+        const remain = (examDeadline - Date.now()) / 1000;
+        if (el) el.textContent = formatSec(remain);
+        if (remain <= 0) {
+          stopExamTimer();
+          onTimeout?.();
+        }
+      }
+      tick();
+      examTimerId = setInterval(tick, 250);
+    }
+
+    function showExamUI(active) {
+      document.getElementById('examStage').classList.toggle('hidden', !active);
+      document.getElementById('btnNextExam').classList.toggle('hidden', !active);
+      document.getElementById('btnSubmitExam').classList.toggle('hidden', !active);
+      document.getElementById('btnExitExam').classList.toggle('hidden', !active);
+    }
+
+    function renderExamQuestion() {
+      const title = document.getElementById('examTitle');
+      const body = document.getElementById('examBody');
+      const prog = document.getElementById('examProgress');
+      if (!examState) return;
+
+      if (examState.phase === 'reading') {
+        const g = examState.readingSets[examState.index];
+        const qi = examState.subIndex;
+        const q = g.questions[qi];
+        title.textContent = `阅读（第 ${examState.index + 1} / 10 组，第 ${qi + 1} / 4 题）`;
+        prog.textContent = `${examState.answered}/${examState.total}`;
+
+        body.innerHTML = `
+          <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+            <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">长文</div>
+            <div class="mt-2 whitespace-pre-wrap">${escapeHtml(g.passage)}</div>
+          </div>
+          <div class="mt-3 rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+            <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">题目</div>
+            <div class="mt-2 text-sm font-semibold">${escapeHtml(q.stem)}</div>
+            <div class="mt-3 grid gap-2">
+              ${['A','B','C'].map(k => `
+                <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
+                  <input type="radio" name="examAns" value="${k}" class="mt-1" />
+                  <div class="text-sm">${k}. ${escapeHtml(q.options[k])}</div>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } else {
+        const item = examState.calcItems[examState.index];
+        title.textContent = `计算（第 ${examState.index + 1} / 30 题）`;
+        prog.textContent = `${examState.answered}/${examState.total}`;
+
+        body.innerHTML = `
+          <div class="rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+            <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">题目图片</div>
+            <div class="mt-2"><img src="${escapeHtml(item.imageDataUrl)}" class="w-full rounded-2xl border border-ink-200 dark:border-white/10" loading="lazy" alt="题目图片" /></div>
+          </div>
+          <div class="mt-3 rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
+            <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">题干</div>
+            <div class="mt-2 text-sm font-semibold">${escapeHtml(item.stem)}</div>
+            <div class="mt-3 grid gap-2">
+              ${['A','B','C','D'].map(k => `
+                <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
+                  <input type="radio" name="examAns" value="${k}" class="mt-1" />
+                  <div class="text-sm">${k}. ${escapeHtml(item.options[k])}</div>
+                </label>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function getExamSelected() {
+      const el = document.querySelector('input[name="examAns"]:checked');
+      return el ? el.value : '';
+    }
+
+    function pushWrongFromExam(detail) {
+      const wrong = loadWrong();
+      wrong.push({ id: uid(), at: Date.now(), type: examState.phase === 'reading' ? 'reading' : 'calc', detail });
+      saveWrong(wrong);
+    }
+
+    function downloadJson(filename, data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function normalizeBankItem(item) {
+      if (!item || typeof item !== 'object') return null;
+      const out = { ...item };
+      if (!out.id) out.id = uid();
+      if (!out.createdAt) out.createdAt = Date.now();
+      if (!out.type) return null;
+      if (out.type === 'reading') {
+        out.passage = String(out.passage || '');
+        out.explain = String(out.explain || '');
+        if (!Array.isArray(out.questions) || out.questions.length !== 4) return null;
+        out.questions = out.questions.map(q => ({
+          stem: String(q?.stem || ''),
+          optionsFixed: true,
+          options: {
+            A: q?.options?.A || '文脈の論理から明らかに正しい。または正しい内容を含んでいる。',
+            B: q?.options?.B || '文脈の論理から明らかに間違っている。または間違った内容を含んでいる。',
+            C: q?.options?.C || '問題文の内容だけからでは、設問文は論理的に導けない'
+          },
+          answer: String(q?.answer || 'A').trim()
+        }));
+      } else if (out.type === 'calc') {
+        out.stem = String(out.stem || '');
+        out.imageDataUrl = String(out.imageDataUrl || '');
+        out.options = out.options && typeof out.options === 'object' ? out.options : {};
+        out.options = {
+          A: String(out.options.A || ''),
+          B: String(out.options.B || ''),
+          C: String(out.options.C || ''),
+          D: String(out.options.D || '')
+        };
+        out.answer = String(out.answer || 'A').trim();
+        out.explain = String(out.explain || '');
+      } else {
+        return null;
+      }
+      return out;
+    }
+
+    function normalizeWrongItem(item) {
+      if (!item || typeof item !== 'object') return null;
+      const out = { ...item };
+      if (!out.id) out.id = uid();
+      if (!out.at) out.at = Date.now();
+      out.type = out.type === 'reading' || out.type === 'calc' ? out.type : '';
+      out.detail = String(out.detail || '');
+      out.passage = out.passage ? String(out.passage) : undefined;
+      out.stem = out.stem ? String(out.stem) : undefined;
+      return out;
+    }
+
+    function mergeById(existing, incoming) {
+      const map = new Map();
+      (existing || []).forEach(x => { if (x && x.id) map.set(x.id, x); });
+      (incoming || []).forEach(x => { if (x && x.id) map.set(x.id, x); });
+      return Array.from(map.values());
+    }
+
+    function importAllDataMerge(payload) {
+      const bankIn = Array.isArray(payload?.bank) ? payload.bank : [];
+      const wrongIn = Array.isArray(payload?.wrong) ? payload.wrong : [];
+      const settingsIn = payload?.settings && typeof payload.settings === 'object' ? payload.settings : null;
+      const historyIn = Array.isArray(payload?.history) ? payload.history : [];
+
+      const bankNorm = bankIn.map(normalizeBankItem).filter(Boolean);
+      const wrongNorm = wrongIn.map(normalizeWrongItem).filter(Boolean);
+
+      const bankMerged = mergeById(loadBank(), bankNorm);
+      const wrongMerged = mergeById(loadWrong(), wrongNorm);
+
+      saveBank(bankMerged);
+      saveWrong(wrongMerged);
+
+      if (settingsIn) {
+        const cur = loadSettings();
+        saveSettings({
+          ...cur,
+          ...settingsIn,
+          practice: { ...cur.practice, ...(settingsIn.practice || {}) },
+          exam: { ...cur.exam, ...(settingsIn.exam || {}) }
+        });
+      }
+
+      if (historyIn.length) {
+        const histMerged = mergeById(loadHistory(), historyIn.map(x => ({
+          id: x?.id || uid(),
+          at: x?.at || Date.now(),
+          kind: x?.kind || 'unknown',
+          type: x?.type || '',
+          ok: !!x?.ok
+        })));
+        saveHistory(histMerged);
+      }
+
+      refreshAllLists();
+      refreshAdminPanel?.();
+    }
+
+    function nextExamStep() {
+      if (!examState) return;
+
+      if (examState.phase === 'reading') {
+        examState.subIndex += 1;
+        if (examState.subIndex >= 4) {
+          examState.subIndex = 0;
+          examState.index += 1;
+        }
+        if (examState.index >= 10) {
+          // 转入计算阶段
+          examState.phase = 'calc';
+          examState.index = 0;
+          examState.subIndex = 0;
+          document.getElementById('examHint').textContent = '阅读阶段结束，进入计算阶段（25分钟）';
+          startExamCountdown(25 * 60, () => finishExam(true));
+        }
+      } else {
+        examState.index += 1;
+        if (examState.index >= 30) {
+          finishExam(false);
+          return;
+        }
+      }
+
+      renderExamQuestion();
+    }
+
+    function finishExam(timeout) {
+      stopExamTimer();
+      showExamUI(false);
+
+      const result = document.getElementById('examResult');
+      const correct = examState.correct;
+      const total = examState.total;
+      const rate = total ? Math.round((correct / total) * 100) : 0;
+
+      // 错题明细
+      const wrongDetail = examState.wrongDetails;
+
+      // 考试统计记录（用于管理员统计）
+      addHistoryEvent({
+        kind: 'exam',
+        type: 'mixed',
+        ok: false,
+        at: Date.now()
+      });
+
+      result.classList.remove('hidden');
+      result.innerHTML = `
+        <div class="text-sm font-semibold">考试结果</div>
+        <div class="mt-2 text-sm text-ink-700 dark:text-ink-200">正确率：<span class="font-semibold">${rate}%</span>（${correct}/${total}）${timeout ? ' · 已到时自动结束' : ''}</div>
+        <div class="mt-4">
+          <div class="text-sm font-semibold">错题明细（题干/选项/解析）</div>
+          ${wrongDetail.length ? wrongDetail.map((d, i) => `
+            <div class="mt-2 rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+              <div class="font-semibold">${i + 1}. ${escapeHtml(d.title)}</div>
+              <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">你的选择：${escapeHtml(d.your || '未选')} · 正确答案：${escapeHtml(d.correct)}</div>
+              <div class="mt-2 text-xs whitespace-pre-wrap">${escapeHtml(d.detail)}</div>
+            </div>
+          `).join('') : `<div class="mt-2 text-sm text-ink-600 dark:text-ink-300">本次没有错题</div>`}
+        </div>
+      `;
+
+      // 同步到错题本
+      wrongDetail.forEach(d => pushWrongFromExam(d.detail));
+      refreshAllLists();
+      showToast('考试已结束');
+    }
+
+    document.getElementById('btnStartExam')?.addEventListener('click', () => {
+      const readingPool = getBankByType('reading');
+      const calcPool = getBankByType('calc');
+
+      function fillByRandomRepeat(pool, need) {
+        const arr = [];
+        if (!pool.length) return arr;
+        while (arr.length < need) {
+          arr.push(pool[Math.floor(Math.random() * pool.length)]);
+        }
+        return arr;
+      }
+
+      if (!readingPool.length) {
+        document.getElementById('examHint').textContent = '题库里没有阅读题，请先上传。';
+        return;
+      }
+      if (!calcPool.length) {
+        document.getElementById('examHint').textContent = '题库里没有计算题，请先上传。';
+        return;
+      }
+
+      const readingSets = fillByRandomRepeat(readingPool, 10);
+      const calcItems = fillByRandomRepeat(calcPool, 30);
+
+      examState = {
+        phase: 'reading',
+        readingSets,
+        calcItems,
+        index: 0,
+        subIndex: 0,
+        answered: 0,
+        correct: 0,
+        total: 10 * 4 + 30,
+        wrongDetails: []
+      };
+
+      document.getElementById('examHint').textContent = '阅读阶段进行中（35分钟）';
+      document.getElementById('examResult').classList.add('hidden');
+      showExamUI(true);
+      renderExamQuestion();
+      syncExamButtons();
+      startExamCountdown(35 * 60, () => {
+        // 到时自动结束阅读阶段并进入计算阶段？你的规则是阅读阶段时间到自动结束考试，再做计算题30题25分钟。
+        // 这里实现：阅读阶段到时，直接进入计算阶段并开始25分钟；计算阶段到时结束。
+        document.getElementById('examHint').textContent = '阅读阶段到时，进入计算阶段（25分钟）';
+        examState.phase = 'calc';
+        examState.index = 0;
+        examState.subIndex = 0;
+        renderExamQuestion();
+        startExamCountdown(25 * 60, () => finishExam(true));
+      });
+    });
+
+    // 考试中不允许退出：隐藏按钮并阻止交互
+    document.getElementById('btnExitExam').classList.add('hidden');
+
+    function syncExamButtons() {
+      const startBtn = document.getElementById('btnStartExam');
+      const nextBtn = document.getElementById('btnNextExam');
+      const submitBtn = document.getElementById('btnSubmitExam');
+      const exitBtn = document.getElementById('btnExitExam');
+
+      if (!examState) {
+        startBtn.classList.remove('hidden');
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.add('hidden');
+        exitBtn.classList.add('hidden');
+        return;
+      }
+
+      // 开考后：隐藏“开始考试”，不显示“退出”
+      startBtn.classList.add('hidden');
+      exitBtn.classList.add('hidden');
+
+      const isLast = examState.answered >= (examState.total - 1);
+      if (isLast) {
+        nextBtn.classList.add('hidden');
+        submitBtn.classList.remove('hidden');
+      } else {
+        nextBtn.classList.remove('hidden');
+        submitBtn.classList.add('hidden');
+      }
+    }
+
+    function recordCurrentExamAnswerOrWarn() {
+      const sel = getExamSelected();
+      if (!sel) {
+        showToast('请先选择一个答案');
+        return null;
+      }
+
+      let correct = '';
+      let title = '';
+      let detail = '';
+
+      if (examState.phase === 'reading') {
+        const g = examState.readingSets[examState.index];
+        const q = g.questions[examState.subIndex];
+        correct = q.answer;
+        title = q.stem;
+        detail = `长文：${g.passage}\n题目：${q.stem}\nA: ${q.options.A}\nB: ${q.options.B}\nC: ${q.options.C}\n解析：${g.explain || '（无）'}`;
+      } else {
+        const item = examState.calcItems[examState.index];
+        correct = item.answer;
+        title = item.stem;
+        detail = `题干：${item.stem}\nA: ${item.options.A}\nB: ${item.options.B}\nC: ${item.options.C}\nD: ${item.options.D}\n解析：${item.explain || '（无）'}`;
+      }
+
+      examState.answered += 1;
+      if (sel === correct) {
+        examState.correct += 1;
+      } else {
+        examState.wrongDetails.push({ title, your: sel, correct, detail });
+      }
+
+      return sel;
+    }
+
+    document.getElementById('btnNextExam')?.addEventListener('click', () => {
+      if (!examState) return;
+      const sel = recordCurrentExamAnswerOrWarn();
+      if (!sel) return;
+      nextExamStep();
+      syncExamButtons();
+    });
+
+    document.getElementById('btnSubmitExam')?.addEventListener('click', () => {
+      if (!examState) return;
+
+      // 只允许在最后一题提交
+      const isLast = examState.answered >= (examState.total - 1);
+      if (!isLast) {
+        showToast('请先完成所有题目');
+        return;
+      }
+
+      const sel = recordCurrentExamAnswerOrWarn();
+      if (!sel) return;
+
+      finishExam(false);
+
+      // 提交后按钮变灰“已提交”并禁用
+      const submitBtn = document.getElementById('btnSubmitExam');
+      submitBtn.disabled = true;
+      submitBtn.textContent = '已提交';
+      submitBtn.className = submitBtn.className
+        .replace('bg-white', 'bg-ink-200')
+        .replace('text-ink-700', 'text-ink-600');
+      const nextBtn = document.getElementById('btnNextExam');
+      nextBtn.classList.add('hidden');
+      syncExamButtons();
+    });
+
+    // ===== 错题回顾 =====
+    document.getElementById('btnClearWrong')?.addEventListener('click', () => {
+      if (!confirm('确定清空错题吗？')) return;
+      saveWrong([]);
+      renderWrong();
+      refreshStats();
+      showToast('错题已清空');
+      refreshAdminPanel?.();
+    });
+
+    // ===== 小红书号：点击复制（无弹窗） =====
+    async function copyTextToClipboard(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // 兼容降级
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.top = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+          return ok;
+        } catch {
+          return false;
+        }
+      }
+    }
+
+    document.getElementById('xhsCopyLink')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const ok = await copyTextToClipboard('6182865435');
+      showToast(ok ? '已复制：6182865435' : '复制失败，请手动复制');
+    });
+
+    // ===== 设置语言选择器（页面内 + 顶栏） =====
+    const langSelect = document.getElementById('langSelect');
+    const headerLangSelect = document.getElementById('headerLangSelect');
+
+    function syncLangSelects() {
+      const v = normalizeLang(getLang());
+      if (langSelect) langSelect.value = v;
+      if (headerLangSelect) headerLangSelect.value = v;
+    }
+
+    if (langSelect) {
+      syncLangSelects();
+      langSelect.addEventListener('change', () => {
+        setLang(langSelect.value);
+        syncLangSelects();
+        showToast('语言已切换');
+      });
+    }
+
+    if (headerLangSelect) {
+      syncLangSelects();
+      headerLangSelect.addEventListener('change', () => {
+        setLang(headerLangSelect.value);
+        syncLangSelects();
+        showToast('语言已切换');
+      });
+    }
+
+    function isAdminMode() {
+      return (location.hash || '').toLowerCase().includes('admin') || (location.search || '').toLowerCase().includes('admin');
+    }
+
+    const ADMIN_UNLOCK_KEY = 'webtestAdminUnlocked';
+
+    function isAdminUnlocked() {
+      return localStorage.getItem(ADMIN_UNLOCK_KEY) === '1';
+    }
+
+    function setAdminUnlocked(v) {
+      localStorage.setItem(ADMIN_UNLOCK_KEY, v ? '1' : '0');
+    }
+
+    function showAdminGate(show) {
+      const gate = document.getElementById('adminGate');
+      if (!gate) return;
+      if (show) {
+        gate.classList.remove('hidden');
+        gate.classList.add('flex');
+        document.getElementById('adminGateErr')?.classList.add('hidden');
+        const input = document.getElementById('adminPassInput');
+        if (input) {
+          input.value = '';
+          setTimeout(() => input.focus(), 0);
+        }
+      } else {
+        gate.classList.add('hidden');
+        gate.classList.remove('flex');
+      }
+    }
+
+    function unlockByPassword(pwd) {
+      if (String(pwd || '').trim() === '243601') {
+        setAdminUnlocked(true);
+        return true;
+      }
+      return false;
+    }
+
+    function applyAdminMode() {
+      const adminBtn = document.getElementById('btnAdmin');
+
+      if (!isAdminMode()) {
+        adminBtn?.classList.add('hidden');
+        showAdminGate(false);
+        return;
+      }
+
+      if (isAdminUnlocked()) {
+        adminBtn?.classList.remove('hidden');
+        showAdminGate(false);
+        openPanel('admin');
+        return;
+      }
+
+      // 未解锁：显示遮罩，不直接进入
+      adminBtn?.classList.add('hidden');
+      showAdminGate(true);
+    }
+
+    // 管理员遮罩交互
+    document.getElementById('adminGateCancel')?.addEventListener('click', () => {
+      showAdminGate(false);
+      if (location.hash) location.hash = '';
+      backHome();
+    });
+
+    document.getElementById('adminGateOk')?.addEventListener('click', () => {
+      const input = document.getElementById('adminPassInput');
+      const ok = unlockByPassword(input?.value);
+      if (!ok) {
+        document.getElementById('adminGateErr')?.classList.remove('hidden');
+        input?.select();
+        return;
+      }
+      showAdminGate(false);
+      const adminBtn = document.getElementById('btnAdmin');
+      adminBtn?.classList.remove('hidden');
+      openPanel('admin');
+    });
+
+    document.getElementById('adminPassInput')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('adminGateOk')?.click();
+      }
+    });
+
+    async function initDefaultBankIfNeeded() {
+      const bank = loadBank();
+      if (bank.length > 0) {
+        return; // Already has data, do nothing
+      }
+      try {
+        const res = await fetch('questions.json');
+        if (!res.ok) return;
+        const defaultBank = await res.json();
+        if (Array.isArray(defaultBank)) {
+          const normalized = defaultBank.map(normalizeBankItem).filter(Boolean);
+          saveBank(normalized);
+        }
+      } catch (e) {
+        console.error('Failed to load default question bank', e);
+      }
+    }
+
+    // 初始化年份/主题/语言/列表
+    async function mainInit() {
+      document.getElementById('year').textContent = new Date().getFullYear();
+      initTheme();
+      setUploadType('reading');
+      await initDefaultBankIfNeeded();
+      applyI18n();
+      refreshAllLists();
+
+      // URL 切换 admin 状态时即时生效
+      window.addEventListener('hashchange', applyAdminMode);
+      applyAdminMode();
+    }
+
+    mainInit();
+
+    // 主题切换时，语言不受影响
+  </script>
+</body>
+</html>
