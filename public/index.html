@@ -3073,24 +3073,11 @@
           console.error('Failed to fetch questions.json, status:', res.status);
           return;
         }
-        const payload = await res.json();
-        const bankArray = Array.isArray(payload)
-          ? payload
-          : (Array.isArray(payload?.bank) ? payload.bank : null);
-
-        if (!bankArray) {
-          console.error('Central bank JSON structure not recognized. Expected an array or { bank: [...] }. Got:', payload);
-          showToast('题库格式不正确，无法加载');
-          return;
+        const centralBank = await res.json();
+        if (Array.isArray(centralBank)) {
+          const normalized = centralBank.map(normalizeBankItem).filter(Boolean);
+          saveBank(normalized); // Overwrite local bank with central data
         }
-
-        const normalized = bankArray.map(normalizeBankItem).filter(Boolean);
-        if (!normalized.length) {
-          console.error('Central bank loaded but no valid items after normalization.');
-          showToast('题库为空或格式异常');
-          return;
-        }
-        saveBank(normalized); // Overwrite local bank with central data
       } catch (e) {
         console.error('Failed to load or parse central question bank', e);
       }
