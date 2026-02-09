@@ -1752,14 +1752,37 @@
       });
     }
 
-    document.getElementById('adminFeedbackFilter')?.addEventListener('change', renderAdminFeedbackList);
+    document.getElementById('adminFeedbackFilter')?.addEventListener('change', () => renderAdminFeedbackList());
 
-    document.getElementById('btnClearFeedback')?.addEventListener('click', () => {
+    // 管理员 Token：保存/刷新
+    (function initAdminTokenUi() {
+      const input = document.getElementById('adminTokenInput');
+      const btnSave = document.getElementById('btnSaveAdminToken');
+      const btnRefresh = document.getElementById('btnRefreshFeedback');
+      if (input) input.value = getAdminTokenLocal();
+
+      btnSave?.addEventListener('click', () => {
+        setAdminTokenLocal(input?.value || '');
+        showToast('已保存 Token');
+        renderAdminFeedbackList();
+      });
+
+      btnRefresh?.addEventListener('click', () => renderAdminFeedbackList());
+    })();
+
+    document.getElementById('btnClearFeedback')?.addEventListener('click', async () => {
       const ok = confirm('确定清空所有反馈吗？');
       if (!ok) return;
-      saveFeedback([]);
+
+      const serverOk = await clearFeedbackOnServer();
+      if (!serverOk) {
+        // fallback: local only
+        saveFeedback([]);
+        showToast('已清空（仅本机）');
+      } else {
+        showToast('已清空（全用户）');
+      }
       renderAdminFeedbackList();
-      showToast('已清空');
     });
 
     document.getElementById('btnSaveSettings')?.addEventListener('click', () => {
