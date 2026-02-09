@@ -774,6 +774,64 @@
       localStorage.setItem(LS_KEYS.history, JSON.stringify(h));
     }
 
+    const LS_USER_ID_KEY = 'webtestUserId';
+    const LS_ADMIN_TOKEN_KEY = 'webtestAdminToken';
+
+    function getOrCreateUserId() {
+      const existing = localStorage.getItem(LS_USER_ID_KEY);
+      if (existing) return existing;
+      const id = `u_${uid()}`;
+      localStorage.setItem(LS_USER_ID_KEY, id);
+      return id;
+    }
+
+    function getAdminTokenLocal() {
+      return localStorage.getItem(LS_ADMIN_TOKEN_KEY) || '';
+    }
+
+    function setAdminTokenLocal(t) {
+      localStorage.setItem(LS_ADMIN_TOKEN_KEY, String(t || '').trim());
+    }
+
+    async function postFeedbackToServer(item) {
+      try {
+        const res = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(item)
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    async function fetchFeedbackFromServer(limit) {
+      const token = getAdminTokenLocal();
+      if (!token) throw new Error('missing_admin_token');
+      const res = await fetch(`/api/feedback?limit=${encodeURIComponent(String(limit || 500))}`, {
+        headers: { authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error(`http_${res.status}`);
+      const data = await res.json();
+      if (!data || !data.ok || !Array.isArray(data.items)) throw new Error('bad_response');
+      return data.items;
+    }
+
+    async function clearFeedbackOnServer() {
+      const token = getAdminTokenLocal();
+      if (!token) return false;
+      try {
+        const res = await fetch('/api/feedback', {
+          method: 'DELETE',
+          headers: { authorization: `Bearer ${token}` }
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
     function loadFeedback() {
       return safeJsonParse(localStorage.getItem(LS_KEYS.feedback), []);
     }
@@ -793,15 +851,31 @@
       const item = {
         id: idx >= 0 ? list[idx].id : uid(),
         at: Date.now(),
+        userId: getOrCreateUserId(),
         qKey,
         type,
-        suggest
+        suggest,
+        existing: ''
       };
       if (idx >= 0) list[idx] = item;
       else list.push(item);
 
       if (list.length > 10000) list.splice(0, list.length - 10000);
       saveFeedback(list);
+
+      postFeedbackToServer({
+        id: item.id,
+        at: item.at,
+        userId: item.userId,
+        qKey: item.qKey,
+        type: item.type,
+        suggest: item.suggest,
+        existing: item.existing,
+        ua: navigator.userAgent,
+        ref: location.href
+      }).then(ok => {
+        if (!ok) console.warn('post /api/feedback failed, fallback to local only');
+      });
     }
 
     function addHistoryEvent(e) {
@@ -1517,12 +1591,19 @@
       });
     }
 
-    function renderAdminFeedbackList() {
+    async function renderAdminFeedbackList() {
       const wrap = document.getElementById('adminFeedbackList');
       if (!wrap) return;
 
       const filter = document.getElementById('adminFeedbackFilter')?.value || 'all';
-      const list = loadFeedback().filter(x => filter === 'all' ? true : x.type === filter);
+
+      let list = [];
+      try {
+        const serverItems = await fetchFeedbackFromServer(2000);
+        list = (serverItems || []).filter(x => filter === 'all' ? true : String(x.type) === filter);
+      } catch (e) {
+        list = loadFeedback().filter(x => filter === 'all' ? true : x.type === filter);
+      }
 
       if (!list.length) {
         wrap.innerHTML = `<div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-600 dark:border-white/10 dark:bg-white/5 dark:text-ink-300">暂无反馈</div>`;
