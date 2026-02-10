@@ -1508,7 +1508,7 @@
     }
 
     function getAnswerChoicesByType(type) {
-      return type === 'calc' ? ['A', 'B', 'C', 'D'] : ['A', 'B', 'C'];
+      return type === 'calc' ? ['A', 'B', 'C', 'D', 'E'] : ['A', 'B', 'C'];
     }
 
     function getExistingFeedback(qKey, type) {
@@ -2504,7 +2504,7 @@
       const correct = item.answer;
       const ok = sel === correct;
       if (!ok) {
-        addWrongFromPractice({ type: 'calc', stem: item.stem }, `题干：${item.stem}\n你的选择：${sel}\n正确答案：${correct}\n选项：A ${item.options.A} | B ${item.options.B} | C ${item.options.C} | D ${item.options.D}\n解析：${item.explain || '（无）'}`);
+        addWrongFromPractice({ type: 'calc', stem: item.stem }, `题干：${item.stem}\n你的选择：${sel}\n正确答案：${correct}\n选项：A ${item.options.A} | B ${item.options.B} | C ${item.options.C} | D ${item.options.D} | E ${item.options.E}\n解析：${item.explain || '（无）'}`);
       }
 
       resultEl.classList.remove('hidden');
