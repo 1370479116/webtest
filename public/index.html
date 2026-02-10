@@ -346,12 +346,13 @@
               <div>
                 <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">选项 D</div>
                 <input id="cD" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入D" />
+                <input id="cE" class="mt-2 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入E" />
               </div>
             </div>
 
             <div class="flex items-center gap-3">
               <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.calcAnswer">正确答案</div>
-              <select id="calcAnswer" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option><option>D</option></select>
+              <select id="calcAnswer" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select>
             </div>
 
             <div>
@@ -2004,6 +2005,7 @@
       const B = (document.getElementById('cB').value || '').trim();
       const C = (document.getElementById('cC').value || '').trim();
       const D = (document.getElementById('cD').value || '').trim();
+      const E = (document.getElementById('cE').value || '').trim();
       const answer = (document.getElementById('calcAnswer').value || 'A').trim();
       const explain = (document.getElementById('calcExplain').value || '').trim();
 
@@ -2011,8 +2013,8 @@
         hint.textContent = '请先上传题目图片';
         return;
       }
-      if (!stem || !A || !B || !C || !D) {
-        hint.textContent = '请填写题干与四个选项';
+      if (!stem || !A || !B || !C || !D || !E) {
+        hint.textContent = '请填写题干与五个选项';
         return;
       }
 
@@ -2022,7 +2024,7 @@
         createdAt: Date.now(),
         imageDataUrl: calcImageDataUrl,
         stem,
-        options: { A, B, C, D },
+        options: { A, B, C, D, E },
         answer,
         explain
       };
@@ -2045,6 +2047,7 @@
       document.getElementById('cB').value = '';
       document.getElementById('cC').value = '';
       document.getElementById('cD').value = '';
+      document.getElementById('cE').value = '';
       document.getElementById('calcAnswer').value = 'A';
       document.getElementById('calcExplain').value = '';
 
