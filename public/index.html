@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
-  <title>WebTest</title>
+  <title>SPI网测平台 - 考试通</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
@@ -47,7 +47,13 @@
 
   <style>
     :root { --sb: rgba(100,116,139,.35); --sb2: rgba(100,116,139,.18); }
-    .dark :root { --sb: rgba(148,163,184,.35); --sb2: rgba(148,163,184,.16); }
+    html.dark { --sb: rgba(148,163,184,.35); --sb2: rgba(148,163,184,.16); }
+
+    .ansGroup { display:inline-flex; gap:6px; padding:4px; border-radius:12px; background: rgba(248,250,252,1); }
+    .dark .ansGroup { background: rgba(255,255,255,.05); }
+    .ansGroup .ans-btn { padding:6px 10px; border-radius:10px; }
+    .ansGroup .ans-btn:not(.active) { color: rgb(51 65 85); }
+    .dark .ansGroup .ans-btn:not(.active) { color: rgb(226 232 240); }
     *::-webkit-scrollbar { width: 10px; height: 10px; }
     *::-webkit-scrollbar-thumb { background: var(--sb); border-radius: 999px; border: 2px solid transparent; background-clip: content-box; }
     *::-webkit-scrollbar-track { background: var(--sb2); }
@@ -105,6 +111,17 @@
       background: rgba(255,255,255,.07);
       box-shadow: 0 10px 30px rgba(0,0,0,0.30);
     }
+    /* 右上角双环：外圈=已用时间比例，内圈=已答题目比例 */
+    .progress-ring-wrap { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+    .progress-ring-wrap svg { transform: rotate(-90deg); }
+    .progress-ring-wrap .ring-outer { stroke: rgba(100,116,139,.25); }
+    .progress-ring-wrap .ring-outer-fill { stroke: rgba(109,94,241,.5); transition: stroke-dashoffset .2s ease; }
+    .progress-ring-wrap .ring-inner { stroke: rgba(100,116,139,.2); }
+    .progress-ring-wrap .ring-inner-fill { stroke: rgba(109,94,241,.85); transition: stroke-dashoffset .2s ease; }
+    /* 选项整卡可点：点任意处即选中，选中时高亮 */
+    .option-card:has(input:checked) { border-color: rgba(109,94,241,.6); background: rgba(109,94,241,.06); }
+    .dark .option-card:has(input:checked) { border-color: rgba(109,94,241,.5); background: rgba(109,94,241,.12); }
+    .ans-btn.active { background-color: rgba(109,94,241,1); color: #fff; }
   </style>
 </head>
 
@@ -119,8 +136,8 @@
           <span class="hidden sm:inline" data-i18n="common.home">主页</span>
         </button>
         <div class="leading-tight">
-          <div class="text-lg font-semibold tracking-tight">WebTest</div>
-          <div class="text-xs text-ink-500 dark:text-ink-400">简约主页面</div>
+          <div class="text-lg font-semibold tracking-tight">SPI网测平台</div>
+          <div class="text-xs text-ink-500 dark:text-ink-400">练习 / 考试 / 错题回顾</div>
         </div>
       </div>
 
@@ -138,13 +155,20 @@
           <span class="hidden sm:inline" data-i18n="admin.title">管理员</span>
         </button>
 
-        <button id="themeToggle" class="group inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm transition hover:scale-[1.02] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20 dark:hover:bg-white/10" type="button" aria-label="切换深色/浅色模式">
-        <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-700 transition group-hover:bg-ink-200 dark:bg-white/10 dark:text-ink-100 dark:group-hover:bg-white/15">
-          <i id="themeIcon" class="fa-solid fa-circle-half-stroke"></i>
-        </span>
-        <span class="hidden sm:inline">外观</span>
-        <span class="text-xs text-ink-500 dark:text-ink-400 hidden md:inline" id="themeLabel">跟随系统</span>
-      </button>
+        <button id="btnUserPanel" class="group inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm transition hover:scale-[1.02] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20 dark:hover:bg-white/10" type="button" aria-label="用户与设置">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-700 transition group-hover:bg-ink-200 dark:bg-white/10 dark:text-ink-100 dark:group-hover:bg-white/15">
+            <i class="fa-solid fa-user"></i>
+          </span>
+          <span class="hidden sm:inline">用户</span>
+        </button>
+        <a class="group inline-flex items-center gap-2 rounded-xl border border-accent-500 bg-accent-500/10 px-3 py-2 text-sm font-semibold text-accent-600 shadow-sm transition hover:scale-[1.02] hover:bg-accent-500/20 dark:text-accent-400 dark:hover:bg-accent-500/20" href="#" id="btnMoreService" role="button">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-accent-500/15 text-accent-600 transition group-hover:bg-accent-500/20 dark:text-accent-400">
+            <i class="fa-solid fa-ellipsis"></i>
+          </span>
+          <span class="hidden sm:inline">更多服务</span>
+        </a>
+
+
       </div>
     </div>
   </header>
@@ -153,8 +177,8 @@
     <section id="homePanel" class="rounded-2xl border border-ink-200 bg-white p-5 shadow-soft dark:border-white/10 dark:bg-white/5 dark:shadow-soft-dark animate-fadeUp">
       <div class="flex items-start justify-between gap-3">
         <div>
-          <h1 class="text-2xl font-semibold tracking-tight" data-i18n="home.title">WebTest</h1>
-          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="home.subtitle">请选择一个功能进入。</p>
+          <h1 class="text-2xl font-semibold tracking-tight" data-i18n="home.title">SPI网测平台</h1>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="home.subtitle">请选择功能进入：练习模式、考试模式或错题回顾。</p>
         </div>
       </div>
 
@@ -217,6 +241,22 @@
           <div class="mt-2 text-xs text-ink-500 dark:text-ink-400" data-i18n="settings.langHint">提示：题库内容不做翻译（例如阅读题的日文选项固定不变）。</div>
         </div>
 
+        <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold">用户登录</div>
+          <p class="mt-1 text-xs text-ink-500 dark:text-ink-400">登入时自动保存 ID，错题本随本机保留。可修改密码（仅本地保存）；多设备同步需后续服务支持。</p>
+          <div class="mt-3 grid gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-ink-500 dark:text-ink-400">您的 ID</span>
+              <input id="userIdInput" type="text" class="flex-1 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="自动生成" />
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-ink-500 dark:text-ink-400">密码（可选）</span>
+              <input id="userPasswordInput" type="password" class="flex-1 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="留空则不修改" autocomplete="off" />
+            </div>
+            <button id="btnSaveUser" type="button" class="rounded-xl bg-accent-500 px-3 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] hover:bg-accent-600">保存</button>
+          </div>
+        </div>
+
         <div class="rounded-2xl border border-ink-200 bg-ink-50 p-4 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200" id="statsBox">
           <div class="font-semibold" data-i18n="stats.title">数据概览</div>
           <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -232,22 +272,209 @@
       <div class="flex items-start justify-between gap-3">
         <div>
           <h2 class="text-lg font-semibold" data-i18n="upload.title">上传题目</h2>
-          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="upload.desc">支持上传阅读题（长文+4小问）与计算题（图片+题干+ABCD）。</p>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300">支持 9 种题型：言语题 6 种 + 非言语题 3 种。选择下方题型后录入。</p>
         </div>
       </div>
 
       <div class="mt-4 grid gap-3">
         <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div class="text-sm font-semibold" data-i18n="upload.type">题型</div>
-            <div class="flex gap-2">
-              <button id="btnTypeReading" class="rounded-xl border border-ink-200 bg-ink-50 px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20">阅读题</button>
-              <button id="btnTypeCalc" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20">计算题</button>
-            </div>
+          <div class="text-sm font-semibold" data-i18n="upload.type">题型</div>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button type="button" class="uploadTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" data-upload-type="verbal1">单词题</button>
+            <button type="button" class="uploadTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" data-upload-type="verbal2">长文选择题</button>
+            <button type="button" class="uploadTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" data-upload-type="verbal3">排序题</button>
+            <button type="button" class="uploadTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" data-upload-type="verbal4">单词填空题</button>
+            <button type="button" class="uploadTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" data-upload-type="verbal5">综合理解题</button>
+            <button type="button" class="uploadTypeBtn rounded-xl border border-ink-200 bg-ink-50 px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" data-upload-type="reading" id="btnTypeReading">单选题</button>
+            <button type="button" class="uploadTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" data-upload-type="nonVerbal1">填空计算题</button>
+            <button type="button" class="uploadTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" data-upload-type="nonVerbal2">综合计算题</button>
+            <button type="button" class="uploadTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20" data-upload-type="calc" id="btnTypeCalc">逻辑题</button>
           </div>
         </div>
 
-        <!-- 阅读题表单 -->
+        <!-- 言语1：熟語選択 5词+4选项ABCD，5道匹配 -->
+        <div id="formVerbal1" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold">单词题（题干固定）</div>
+          <p class="mt-1 text-xs text-ink-500 dark:text-ink-400">以下の5つの熟語の成り立ち方として当てはまるものをA~Dの中から1つずつ選びなさい。</p>
+          <div class="mt-3 grid gap-3">
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">5个词语（每行一个）</span><textarea id="v1_words" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" rows="5" placeholder="词语1\n词语2\n..."></textarea></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">选项 A</span><input id="v1_optA" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="选项A" /></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">选项 B</span><input id="v1_optB" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="选项B" /></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">选项 C</span><input id="v1_optC" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="选项C" /></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">选项 D</span><input id="v1_optD" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="选项D" /></div>
+            <div class="mt-1 space-y-1">
+              <div class="text-xs text-ink-500 dark:text-ink-400">5个词语各自选择 A/B/C/D（直接点字母即可）：</div>
+              <div class="grid grid-cols-1 gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">词1</span>
+                  <input type="hidden" id="v1_a1" value="A" />
+                  <div class="ansGroup" data-ans-group="v1_a1">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="C">C</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="D">D</button>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">词2</span>
+                  <input type="hidden" id="v1_a2" value="A" />
+                  <div class="ansGroup" data-ans-group="v1_a2">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="C">C</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="D">D</button>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">词3</span>
+                  <input type="hidden" id="v1_a3" value="A" />
+                  <div class="ansGroup" data-ans-group="v1_a3">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="C">C</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="D">D</button>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">词4</span>
+                  <input type="hidden" id="v1_a4" value="A" />
+                  <div class="ansGroup" data-ans-group="v1_a4">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="C">C</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="D">D</button>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">词5</span>
+                  <input type="hidden" id="v1_a5" value="A" />
+                  <div class="ansGroup" data-ans-group="v1_a5">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="C">C</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md text-ink-700 dark:text-ink-100" data-ans-val="D">D</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="button" id="btnAddVerbal1" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600">添加本题</button>
+          </div>
+        </div>
+        <!-- 言语2：3文完成 3问+5选项A~E -->
+        <div id="formVerbal2" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold">长文选择题（题干固定）</div>
+          <p class="mt-1 text-xs text-ink-500 dark:text-ink-400">以下の3つの文を完成させるためにA~Eの中から最もつながりのよいものを1つずつ選びなさい。同じ選択肢を重複して使うことはありません。</p>
+          <div class="mt-3 grid gap-3">
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">3个空/问（每行一个）</span><textarea id="v2_questions" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" rows="3" placeholder="问1\n问2\n问3"></textarea></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">选项 A~E</span><input id="v2_optA" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="A" /><input id="v2_optB" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="B" /><input id="v2_optC" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="C" /><input id="v2_optD" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="D" /><input id="v2_optE" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="E" /></div>
+            <div class="space-y-1">
+              <span class="text-xs text-ink-500 dark:text-ink-400">3个答案（直接点 A~E）：</span>
+              <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">空1</span>
+                  <input type="hidden" id="v2_a1" value="A" />
+                  <div class="ansGroup" data-ans-group="v2_a1">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="D">D</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="E">E</button>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">空2</span>
+                  <input type="hidden" id="v2_a2" value="A" />
+                  <div class="ansGroup" data-ans-group="v2_a2">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="D">D</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="E">E</button>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">空3</span>
+                  <input type="hidden" id="v2_a3" value="A" />
+                  <div class="ansGroup" data-ans-group="v2_a3">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="D">D</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="E">E</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="button" id="btnAddVerbal2" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600">添加本题</button>
+          </div>
+        </div>
+        <!-- 言语3：4空欄+4选项 -->
+        <div id="formVerbal3" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold">排序题（题干固定）</div>
+          <p class="mt-1 text-xs text-ink-500 dark:text-ink-400">文中のア〜エの空欄にA~Dの語句を入れて文を完成させるとき、最も適切な組み合わせを答えなさい。</p>
+          <div class="mt-3 grid gap-3">
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">含4个空的文章（用 ア〜エ 标空）</span><textarea id="v3_passage" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" rows="4" placeholder="...ア...イ...ウ...エ..."></textarea></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">选项 A~D</span><input id="v3_optA" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="A" /><input id="v3_optB" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="B" /><input id="v3_optC" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="C" /><input id="v3_optD" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="D" /></div>
+            <div class="flex gap-2"><span class="text-xs text-ink-500 dark:text-ink-400">答案（例：ABCD）</span><input id="v3_answer" class="w-24 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="ABCD" maxlength="4" /></div>
+            <button type="button" id="btnAddVerbal3" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600">添加本题</button>
+          </div>
+        </div>
+        <!-- 言语4：3空欄+3选项 -->
+        <div id="formVerbal4" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold">单词填空题（题干固定）</div>
+          <p class="mt-1 text-xs text-ink-500 dark:text-ink-400">文中のア〜ウの空欄に入れる語として最も適切なものをA~Cの中から1つずつ選びなさい。それぞれの語は1カ所のみ用いるものとします。</p>
+          <div class="mt-3 grid gap-3">
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">含3个空的文章</span><textarea id="v4_passage" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" rows="4" placeholder="...ア...イ...ウ..."></textarea></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">选项 A~C</span><input id="v4_optA" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="A" /><input id="v4_optB" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="B" /><input id="v4_optC" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="C" /></div>
+            <div class="space-y-1">
+              <span class="text-xs text-ink-500 dark:text-ink-400">3空答案（直接点 A/B/C）：</span>
+              <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">空1</span>
+                  <input type="hidden" id="v4_a1" value="A" />
+                  <div class="ansGroup" data-ans-group="v4_a1">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">空2</span>
+                  <input type="hidden" id="v4_a2" value="A" />
+                  <div class="ansGroup" data-ans-group="v4_a2">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] text-ink-500 dark:text-ink-400">空3</span>
+                  <input type="hidden" id="v4_a3" value="A" />
+                  <div class="ansGroup" data-ans-group="v4_a3">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <button type="button" id="btnAddVerbal4" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600">添加本题</button>
+          </div>
+        </div>
+        <!-- 言语5：综合3问 文章+空+4选项、划线问填空、题干+4选项 -->
+        <div id="formVerbal5" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold">综合理解题（题干固定）</div>
+          <p class="mt-1 text-xs text-ink-500 dark:text-ink-400">以下の文章を読んで問いに答えなさい。この問題は3問組です。</p>
+          <div class="mt-3 grid gap-3">
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">文章（含一空）</span><textarea id="v5_passage" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" rows="5" placeholder="文章..."></textarea></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">第1小题 4选项</span><input id="v5_q1A" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="A" /><input id="v5_q1B" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="B" /><input id="v5_q1C" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="C" /><input id="v5_q1D" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="D" /><span class="text-xs text-ink-500 dark:text-ink-400">答案</span><input type="hidden" id="v5_a1" value="A" /><div class="mt-1 ansGroup" data-ans-group="v5_a1"><button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="D">D</button></div></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">第2小题 划线提问（填空答案）</span><input id="v5_q2" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="提问内容" /><input id="v5_a2" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="正确答案（填空）" /></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">第3小题 题干+4选项</span><input id="v5_q3stem" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="题干" /><input id="v5_q3A" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="A" /><input id="v5_q3B" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="B" /><input id="v5_q3C" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="C" /><input id="v5_q3D" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="D" /><input type="hidden" id="v5_a3" value="A" /><div class="mt-1 inline-flex rounded-lg bg-ink-50 p-1 text-xs dark:bg-white/5" data-ans-group="v5_a3"><button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="D">D</button></div></div>
+            <button type="button" id="btnAddVerbal5" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600">添加本题</button>
+          </div>
+        </div>
+
+        <!-- 阅读题表单（言语6） -->
         <div id="formReading" class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <div class="text-sm font-semibold" data-i18n="upload.readingTitle">阅读题录入</div>
           <div class="mt-3 grid gap-3">
@@ -274,7 +501,12 @@
                 <input id="rq1" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入第1个小问题干" />
                 <div class="mt-2 flex items-center gap-2">
                   <label class="text-xs text-ink-500 dark:text-ink-400" data-i18n="upload.answer">答案</label>
-                  <select id="ra1" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option></select>
+                  <input type="hidden" id="ra1" value="A" />
+                  <div class="inline-flex rounded-lg bg-ink-50 p-1 text-xs dark:bg-white/5" data-ans-group="ra1">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                  </div>
                 </div>
               </div>
               <div>
@@ -282,7 +514,12 @@
                 <input id="rq2" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入第2个小问题干" />
                 <div class="mt-2 flex items-center gap-2">
                   <label class="text-xs text-ink-500 dark:text-ink-400" data-i18n="upload.answer">答案</label>
-                  <select id="ra2" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option></select>
+                  <input type="hidden" id="ra2" value="A" />
+                  <div class="inline-flex rounded-lg bg-ink-50 p-1 text-xs dark:bg-white/5" data-ans-group="ra2">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                  </div>
                 </div>
               </div>
               <div>
@@ -290,7 +527,12 @@
                 <input id="rq3" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入第3个小问题干" />
                 <div class="mt-2 flex items-center gap-2">
                   <label class="text-xs text-ink-500 dark:text-ink-400" data-i18n="upload.answer">答案</label>
-                  <select id="ra3" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option></select>
+                  <input type="hidden" id="ra3" value="A" />
+                  <div class="inline-flex rounded-lg bg-ink-50 p-1 text-xs dark:bg-white/5" data-ans-group="ra3">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                  </div>
                 </div>
               </div>
               <div>
@@ -298,7 +540,12 @@
                 <input id="rq4" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-3 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="输入第4个小问题干" />
                 <div class="mt-2 flex items-center gap-2">
                   <label class="text-xs text-ink-500 dark:text-ink-400" data-i18n="upload.answer">答案</label>
-                  <select id="ra4" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option></select>
+                  <input type="hidden" id="ra4" value="A" />
+                  <div class="inline-flex rounded-lg bg-ink-50 p-1 text-xs dark:bg-white/5" data-ans-group="ra4">
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                    <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -350,9 +597,18 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex flex-col gap-1">
               <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.calcAnswer">正确答案</div>
-              <select id="calcAnswer" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select>
+              <div class="flex items-center gap-2">
+                <input type="hidden" id="calcAnswer" value="A" />
+                <div class="inline-flex rounded-lg bg-ink-50 p-1 text-xs dark:bg-white/5" data-ans-group="calcAnswer">
+                  <button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button>
+                  <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button>
+                  <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button>
+                  <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="D">D</button>
+                  <button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="E">E</button>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -362,6 +618,27 @@
 
             <button id="btnAddCalc" class="rounded-2xl bg-accent-500 px-4 py-3 text-sm font-semibold text-white shadow-soft transition hover:scale-[1.01] hover:bg-accent-600 dark:shadow-soft-dark" type="button" data-i18n="upload.addCalc">添加计算题</button>
             <div class="text-xs text-ink-500 dark:text-ink-400" id="calcHint"></div>
+          </div>
+        </div>
+
+        <!-- 非言语1：数値填空 15题，每题1问+1答案 -->
+        <div id="formNonVerbal1" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold">填空计算题（题干固定）</div>
+          <p class="mt-1 text-xs text-ink-500 dark:text-ink-400">空欄に当てはまる数値を求めなさい。</p>
+          <div class="mt-3 grid gap-3">
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">15题：每行一题，格式「题干」或「题干|答案」</span><textarea id="nv1_items" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" rows="15" placeholder="第1题题干\n第2题题干\n...或 题干|答案"></textarea></div>
+            <button type="button" id="btnAddNonVerbal1" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600">添加本题组（15题）</button>
+          </div>
+        </div>
+        <!-- 非言语2：综合图 大题干+图片+2小题（填空+6选项） -->
+        <div id="formNonVerbal2" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+          <div class="text-sm font-semibold">综合计算题</div>
+          <div class="mt-3 grid gap-3">
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">大题干</span><input id="nv2_stem" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="大题干" /></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">题目图片（必传）</span><input id="nv2_image" type="file" accept="image/*" class="mt-2 block w-full text-xs file:rounded-xl file:bg-accent-500 file:px-3 file:py-2 file:text-white" /></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">第1小题 填空（题干+答案）</span><input id="nv2_q1" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="题干" /><input id="nv2_a1" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="答案" /></div>
+            <div><span class="text-xs text-ink-500 dark:text-ink-400">第2小题 题干+6选项 A~F</span><input id="nv2_q2" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="题干" /><input id="nv2_optA" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="A" /><input id="nv2_optB" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="B" /><input id="nv2_optC" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="C" /><input id="nv2_optD" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="D" /><input id="nv2_optE" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="E" /><input id="nv2_optF" class="mt-1 w-full rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5" placeholder="F" /><span class="text-xs text-ink-500 dark:text-ink-400">答案</span><input type="hidden" id="nv2_a2" value="A" /><div class="mt-1 inline-flex rounded-lg bg-ink-50 p-1 text-xs dark:bg-white/5" data-ans-group="nv2_a2"><button type="button" class="ans-btn px-2 py-1 rounded-md active" data-ans-val="A">A</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="B">B</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="C">C</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="D">D</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="E">E</button><button type="button" class="ans-btn px-2 py-1 rounded-md" data-ans-val="F">F</button></div></div>
+            <button type="button" id="btnAddNonVerbal2" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white hover:bg-accent-600">添加本题</button>
           </div>
         </div>
 
@@ -384,26 +661,40 @@
       <div class="flex items-start justify-between gap-3">
         <div>
           <h2 class="text-lg font-semibold" data-i18n="practice.title">练习模式</h2>
-          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="practice.desc">阅读题每题 50 秒；计算题每题 40 秒。完成后显示答案与解析。</p>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="practice.desc">言语题每题 30 秒；非言语题每题 60 秒。完成后显示答案与解析。</p>
         </div>
       </div>
 
       <div class="mt-4 grid gap-3">
         <div class="rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div class="text-sm font-semibold" data-i18n="practice.choose">选择练习类型</div>
-            <div class="flex gap-2">
-              <button id="btnStartPracticeReading" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="practice.startReading">开始阅读练习（1组）</button>
-              <button id="btnStartPracticeCalc" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="practice.startCalc">开始计算练习（1题）</button>
-            </div>
+          <div class="text-sm font-semibold" data-i18n="practice.choose">选择练习类型（言语题 30 秒/题，非言语题 60 秒/题）</div>
+          <div class="mt-2 text-xs text-ink-500 dark:text-ink-400">言语题 6 种 + 非言语题 3 种；题库不足时可重复抽取直至开始。</div>
+          <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <button type="button" class="practiceTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-left text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-type="verbal1">单词题</button>
+            <button type="button" class="practiceTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-left text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-type="verbal2">长文选择题</button>
+            <button type="button" class="practiceTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-left text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-type="verbal3">排序题</button>
+            <button type="button" class="practiceTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-left text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-type="verbal4">单词填空题</button>
+            <button type="button" class="practiceTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-left text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-type="verbal5">综合理解题</button>
+            <button type="button" class="practiceTypeBtn rounded-xl border border-ink-200 bg-accent-500/10 px-3 py-2 text-left text-xs font-semibold text-accent-700 transition hover:scale-[1.01] hover:bg-accent-500/20 dark:text-accent-300" data-type="reading" id="btnStartPracticeReading">单选题</button>
+            <button type="button" class="practiceTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-left text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-type="nonVerbal1">填空计算题</button>
+            <button type="button" class="practiceTypeBtn rounded-xl border border-ink-200 bg-white px-3 py-2 text-left text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-type="nonVerbal2">综合计算题</button>
+            <button type="button" class="practiceTypeBtn rounded-xl border border-ink-200 bg-accent-500/10 px-3 py-2 text-left text-xs font-semibold text-accent-700 transition hover:scale-[1.01] hover:bg-accent-500/20 dark:text-accent-300" data-type="calc" id="btnStartPracticeCalc">逻辑题</button>
           </div>
           <div class="mt-2 text-xs text-ink-500 dark:text-ink-400" id="practiceHint"></div>
         </div>
 
         <div id="practiceStage" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
           <div class="flex items-center justify-between gap-3">
-            <div class="text-sm font-semibold" id="practiceTitle">—</div>
-            <div class="flex items-center gap-2">
+            <div class="text-sm font-semibold min-w-0 flex-1" id="practiceTitle">—</div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div id="practiceProgressRing" class="progress-ring-wrap" aria-hidden="true">
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                  <circle class="ring-outer" cx="28" cy="28" r="26" fill="none" stroke-width="4"/>
+                  <circle id="practiceRingTime" class="ring-outer-fill" cx="28" cy="28" r="26" fill="none" stroke-width="4" stroke-dasharray="163.36" stroke-dashoffset="0"/>
+                  <circle class="ring-inner" cx="28" cy="28" r="18" fill="none" stroke-width="3"/>
+                  <circle id="practiceRingQ" class="ring-inner-fill" cx="28" cy="28" r="18" fill="none" stroke-width="3" stroke-dasharray="113.1" stroke-dashoffset="0"/>
+                </svg>
+              </div>
               <div class="rounded-xl border border-ink-200 bg-ink-50 px-3 py-1 text-xs font-semibold text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
                 <span data-i18n="common.timeLeft">剩余时间</span>：<span id="practiceTimer">--</span>
               </div>
@@ -412,10 +703,12 @@
             </div>
           </div>
           <div class="mt-3" id="practiceBody"></div>
-          <div class="mt-3 flex flex-wrap gap-2">
-            <button id="btnPracticeSubmit" class="rounded-xl bg-accent-500 px-3 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] hover:bg-accent-600" type="button" data-i18n="common.submit">提交</button>
-            <button id="btnPracticeNext" class="hidden rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="common.next">下一题</button>
-            <!-- 跳过按钮已移动到顶部（btnPracticeSkipTop） -->
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-ink-200/70 pt-3 dark:border-white/10">
+            <div class="text-xs text-ink-500 dark:text-ink-400" id="practiceTimeLabel">回答时间：言语题 30 秒/题，非言语题 60 秒/题。超时按错题计。</div>
+            <div class="flex flex-wrap gap-2">
+              <button id="btnPracticeSubmit" class="rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.01] hover:bg-accent-600" type="button" data-i18n="common.submit">提交</button>
+              <button id="btnPracticeNext" class="hidden rounded-xl border border-ink-200 bg-white px-4 py-2 text-sm font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="common.next">下一题</button>
+            </div>
           </div>
           <div class="mt-3 hidden" id="practiceResult"></div>
         </div>
@@ -427,7 +720,7 @@
       <div class="flex items-start justify-between gap-3">
         <div>
           <h2 class="text-lg font-semibold" data-i18n="exam.title">考试模式</h2>
-          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="exam.desc">阅读：10组（35分钟）→ 计算：30题（25分钟）。可提前提交，超时自动结束。</p>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300" data-i18n="exam.desc">阅读：12分钟 → 非言语：24分钟。可提前提交，超时自动结束。</p>
         </div>
       </div>
 
@@ -454,11 +747,27 @@
         </div>
 
         <div id="examStage" class="hidden rounded-2xl border border-ink-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
-          <div class="text-sm font-semibold" id="examTitle">—</div>
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-sm font-semibold min-w-0 flex-1" id="examTitle">—</div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <div id="examProgressRing" class="progress-ring-wrap" aria-hidden="true">
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                  <circle class="ring-outer" cx="28" cy="28" r="26" fill="none" stroke-width="4"/>
+                  <circle id="examRingTime" class="ring-outer-fill" cx="28" cy="28" r="26" fill="none" stroke-width="4" stroke-dasharray="163.36" stroke-dashoffset="0"/>
+                  <circle class="ring-inner" cx="28" cy="28" r="18" fill="none" stroke-width="3"/>
+                  <circle id="examRingQ" class="ring-inner-fill" cx="28" cy="28" r="18" fill="none" stroke-width="3" stroke-dasharray="113.1" stroke-dashoffset="0"/>
+                </svg>
+              </div>
+              <div class="text-xs text-ink-500 dark:text-ink-400"><span data-i18n="common.timeLeft">剩余</span> <span id="examTimerInStage">--</span></div>
+            </div>
+          </div>
           <div class="mt-3" id="examBody"></div>
-          <div class="mt-4 flex justify-end gap-2">
-            <button id="btnNextExam" class="hidden rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-accent-600" type="button" data-i18n="common.next">下一题</button>
-            <button id="btnSubmitExam" class="hidden rounded-xl border border-ink-200 bg-white px-4 py-2 text-sm font-semibold text-ink-700 shadow-sm transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="exam.submit">提交答案</button>
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-ink-200/70 pt-3 dark:border-white/10">
+            <div class="text-xs text-ink-500 dark:text-ink-400">填答案后点击右下角「下一题」或「提交答案」进入下一题。</div>
+            <div class="flex gap-2">
+              <button id="btnNextExam" class="hidden rounded-xl bg-accent-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:scale-[1.01] hover:bg-accent-600" type="button" data-i18n="common.next">下一题</button>
+              <button id="btnSubmitExam" class="hidden rounded-xl border border-ink-200 bg-white px-4 py-2 text-sm font-semibold text-ink-700 shadow-sm transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" type="button" data-i18n="exam.submit">提交答案</button>
+            </div>
           </div>
         </div>
 
@@ -501,8 +810,15 @@
           <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <select id="adminQuestionFilter" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm outline-none transition hover:border-ink-300 focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100">
               <option value="all" data-i18n="admin.filterAll">全部</option>
-              <option value="reading" data-i18n="admin.filterReading">阅读题</option>
-              <option value="calc" data-i18n="admin.filterCalc">计算题</option>
+              <option value="verbal1">单词题</option>
+              <option value="verbal2">长文选择题</option>
+              <option value="verbal3">排序题</option>
+              <option value="verbal4">单词填空题</option>
+              <option value="verbal5">综合理解题</option>
+              <option value="reading">单选题</option>
+              <option value="nonVerbal1">填空计算题</option>
+              <option value="nonVerbal2">综合计算题</option>
+              <option value="calc">逻辑题</option>
             </select>
             <div class="flex w-full gap-2 sm:w-auto">
               <input id="adminSearchQuestions" class="w-full sm:w-64 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" placeholder="搜索题干/长文..." />
@@ -555,8 +871,8 @@
           <div class="mt-3 flex items-center justify-between gap-2">
             <select id="adminFeedbackFilter" class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm outline-none transition hover:border-ink-300 focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100">
               <option value="all">全部</option>
-              <option value="reading">阅读题</option>
-              <option value="calc">计算题</option>
+              <option value="reading">单选题</option>
+              <option value="calc">逻辑题</option>
             </select>
             <button id="btnClearFeedback" class="rounded-xl border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-700 transition hover:scale-[1.01] hover:border-red-300 hover:bg-red-50 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400" type="button">清空反馈</button>
           </div>
@@ -633,29 +949,41 @@
     <div id="toast" class="pointer-events-none fixed left-1/2 top-4 z-50 hidden -translate-x-1/2 rounded-2xl border border-ink-200 bg-white/90 px-4 py-2 text-sm font-semibold text-ink-700 shadow-soft backdrop-blur dark:border-white/10 dark:bg-ink-900/80 dark:text-ink-100 dark:shadow-soft-dark"></div>
   </main>
 
-  <!-- 底部信息栏：保持作者区 -->
+  <!-- 底部信息栏：考试通 · 微信号 · 更多服务 -->
   <footer class="mt-10 border-t border-ink-200/70 bg-ink-50 dark:border-white/10 dark:bg-black/20">
     <div class="mx-auto max-w-2xl px-4 py-8">
       <div class="grid gap-6 md:grid-cols-3">
         <div>
           <div class="text-sm font-semibold">作者信息</div>
           <div class="mt-2 text-sm text-ink-600 dark:text-ink-300">作者姓名：<span class="font-semibold text-ink-800 dark:text-ink-100">考试通</span></div>
-          <div class="mt-1 text-sm text-ink-600 dark:text-ink-300">如果需要网测协助的话，可以复制右方的微信号</div>
-          <div class="mt-1 text-sm text-ink-600 dark:text-ink-300">微信号：<span class="font-semibold text-ink-800 dark:text-ink-100">Webtest007</span></div>
+          <div class="mt-1 text-sm text-ink-600 dark:text-ink-300">本网站只能用来练习，熟悉网测类型；实际考试题型一样，但题目内容不一样。</div>
+          <div class="mt-1 text-sm text-ink-600 dark:text-ink-300">需要考试协助服务请点击右侧微信号，点击后会自动复制微信号。</div>
         </div>
         <div>
-          <div class="text-sm font-semibold">社交媒体</div>
+          <div class="text-sm font-semibold">微信号</div>
           <div class="mt-2">
             <a class="inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-medium text-ink-700 shadow-sm transition hover:scale-[1.02] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20 dark:hover:bg-white/10"
                href="#" id="xhsCopyLink" aria-label="复制微信号" role="button">
-              <i class="fa-solid fa-link"></i>
-              微信号：Webtest007
+              <i class="fa-solid fa-copy"></i>
+              微信号：Webtest007（点击复制）
             </a>
           </div>
+          <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">本站仅用于练习；如需考试协助请联系此微信。</div>
         </div>
         <div class="md:text-right">
-          <div class="text-sm font-semibold">版权</div>
+          <div class="text-sm font-semibold">版权与更多</div>
           <div class="mt-2 text-sm text-ink-600 dark:text-ink-300">© <span id="year"></span> 考试通 · 保留所有权利</div>
+          <div class="mt-3">
+            <button id="themeToggle" class="group inline-flex items-center gap-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-sm transition hover:scale-[1.02] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100 dark:hover:border-white/20 dark:hover:bg-white/10" type="button" aria-label="切换深色/浅色模式">
+              <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-ink-100 text-ink-700 transition group-hover:bg-ink-200 dark:bg-white/10 dark:text-ink-100 dark:group-hover:bg-white/15">
+                <i id="themeIcon" class="fa-solid fa-circle-half-stroke"></i>
+              </span>
+              <span class="hidden sm:inline">外观</span>
+              <span class="text-xs text-ink-500 dark:text-ink-400 hidden md:inline" id="themeLabel">跟随系统</span>
+            </button>
+
+
+          </div>
         </div>
       </div>
     </div>
@@ -716,12 +1044,12 @@
 
     // ===== 数据存储（LocalStorage） =====
     const LS_KEYS = {
-      lang: 'webtestLang',
-      bank: 'webtestQuestionBank',
-      wrong: 'webtestWrongBook',
-      settings: 'webtestSettings',
-      history: 'webtestHistory',
-      feedback: 'webtestAnswerFeedback'
+      lang: 'spiLang',
+      bank: 'spiQuestionBank',
+      wrong: 'spiWrongBook',
+      settings: 'spiSettings',
+      history: 'spiHistory',
+      feedback: 'spiAnswerFeedback'
     };
 
     function safeJsonParse(s, fallback) {
@@ -751,8 +1079,10 @@
 
     function defaultSettings() {
       return {
-        practice: { readingSec: 50, calcSec: 40 },
-        exam: { readingMin: 35, calcMin: 25 }
+        // 默认按照需求：言语题每题 30 秒，非言语题每题 60 秒；
+        // 考试模式：言语 12 分钟，非言语 24 分钟
+        practice: { readingSec: 30, calcSec: 60 },
+        exam: { readingMin: 12, calcMin: 24 }
       };
     }
 
@@ -775,8 +1105,9 @@
       localStorage.setItem(LS_KEYS.history, JSON.stringify(h));
     }
 
-    const LS_USER_ID_KEY = 'webtestUserId';
-    const LS_ADMIN_TOKEN_KEY = 'webtestAdminToken';
+    const LS_USER_ID_KEY = 'spiUserId';
+    const LS_USER_PASSWORD_KEY = 'spiUserPassword';
+    const LS_ADMIN_TOKEN_KEY = 'spiAdminToken';
 
     function getOrCreateUserId() {
       const existing = localStorage.getItem(LS_USER_ID_KEY);
@@ -785,6 +1116,52 @@
       localStorage.setItem(LS_USER_ID_KEY, id);
       return id;
     }
+
+    function getUserPassword() {
+      return localStorage.getItem(LS_USER_PASSWORD_KEY) || '';
+    }
+
+    function setUserPassword(pw) {
+      if (pw != null) localStorage.setItem(LS_USER_PASSWORD_KEY, String(pw));
+    }
+
+    function setUserId(id) {
+      if (id != null && String(id).trim()) localStorage.setItem(LS_USER_ID_KEY, String(id).trim());
+    }
+
+    function syncUserPanelInputs() {
+      const idEl = document.getElementById('userIdInput');
+      const pwEl = document.getElementById('userPasswordInput');
+      if (idEl) idEl.value = getOrCreateUserId();
+      if (pwEl) pwEl.value = ''; // 不显示已存密码，留空表示不修改
+    }
+
+    document.getElementById('btnUserPanel')?.addEventListener('click', () => openPanel('settings'));
+    document.getElementById('btnSaveUser')?.addEventListener('click', () => {
+      const idEl = document.getElementById('userIdInput');
+      const pwEl = document.getElementById('userPasswordInput');
+      const id = idEl?.value?.trim();
+      const pw = pwEl?.value ?? '';
+      if (id) setUserId(id);
+      if (pw !== '') setUserPassword(pw);
+      showToast('已保存');
+      pwEl.value = '';
+    });
+
+    // 管理员表单：答案按钮一字排开（如 A/B/C/D）
+    document.getElementById('panel-upload')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.ans-btn');
+      if (!btn) return;
+      const groupEl = btn.closest('[data-ans-group]');
+      if (!groupEl) return;
+      const targetId = groupEl.getAttribute('data-ans-group');
+      if (!targetId) return;
+      const val = btn.getAttribute('data-ans-val') || '';
+      const hidden = document.getElementById(targetId);
+      if (hidden) hidden.value = val;
+      groupEl.querySelectorAll('.ans-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
 
     function getAdminTokenLocal() {
       return localStorage.getItem(LS_ADMIN_TOKEN_KEY) || '';
@@ -912,8 +1289,8 @@
     // ===== 多语言（仅界面文案可变） =====
     const I18N = {
       'zh-CN': {
-        'home.title': 'WebTest',
-        'home.subtitle': '请选择一个功能进入。',
+        'home.title': 'SPI网测平台',
+        'home.subtitle': '请选择功能进入：练习模式、考试模式或错题回顾。',
         'common.back': '返回',
         'common.exit': '退出',
         'common.submit': '提交',
@@ -934,8 +1311,8 @@
         'admin.questionBank': '题库管理',
         'admin.totalQuestions': '总题数',
         'admin.filterAll': '全部',
-        'admin.filterReading': '阅读题',
-        'admin.filterCalc': '计算题',
+        'admin.filterReading': '单选题',
+        'admin.filterCalc': '逻辑题',
         'admin.wrongBook': '错题本',
         'admin.exportWrong': '导出错题',
         'admin.stats': '统计',
@@ -944,11 +1321,11 @@
         'admin.trend7d': '近 7 天做题趋势',
         'admin.systemSettings': '系统设置',
         'admin.practiceSettings': '练习设置',
-        'admin.readingTimePerQ': '阅读每题(秒)',
-        'admin.calcTimePerQ': '计算每题(秒)',
+        'admin.readingTimePerQ': '单选题每题(秒)',
+        'admin.calcTimePerQ': '逻辑题每题(秒)',
         'admin.examSettings': '考试设置',
-        'admin.readingExamTime': '阅读部分(分钟)',
-        'admin.calcExamTime': '计算部分(分钟)',
+        'admin.readingExamTime': '单选题部分(分钟)',
+        'admin.calcExamTime': '逻辑题部分(分钟)',
 
         'settings.title': '设置 / 语言',
         'settings.desc': '修改界面语言（只影响界面文字，不影响你上传的题目原文）。',
@@ -961,34 +1338,34 @@
         'stats.lang': '当前语言',
 
         'upload.title': '上传题目',
-        'upload.desc': '支持上传阅读题（长文+4小问）与计算题（图片+题干+ABCD）。',
+        'upload.desc': '支持上传单选题（长文+4小问）与逻辑题（图片+题干+ABCDE）。',
         'upload.type': '题型',
-        'upload.readingTitle': '阅读题录入',
-        'upload.calcTitle': '计算题录入',
+        'upload.readingTitle': '单选题录入',
+        'upload.calcTitle': '逻辑题录入',
         'upload.longText': '长文',
         'upload.explain': '解析（可选）',
         'upload.subQ': '小问 {n}',
         'upload.answer': '答案',
         'review.none': '暂无错题',
         'review.expand': '展开详情',
-        'upload.addReading': '添加阅读题',
+        'upload.addReading': '添加单选题',
         'upload.calcImage': '题目图片（必传）',
         'upload.calcStem': '题干',
         'upload.calcAnswer': '正确答案',
-        'upload.addCalc': '添加计算题',
+        'upload.addCalc': '添加逻辑题',
 
         'bank.title': '题库',
         'bank.subtitle': '已保存到本地浏览器（LocalStorage）。',
         'bank.clear': '清空题库',
 
         'practice.title': '练习模式',
-        'practice.desc': '阅读题每题 50 秒；计算题每题 40 秒。完成后显示答案与解析。',
+      'practice.desc': '言语题每题 30 秒；非言语题每题 60 秒。完成后显示答案与解析。',
         'practice.choose': '选择练习类型',
         'practice.startReading': '开始阅读练习（1组）',
         'practice.startCalc': '开始计算练习（1题）',
 
         'exam.title': '考试模式',
-        'exam.desc': '阅读：10组（35分钟）→ 计算：30题（25分钟）。可提前提交，超时自动结束。',
+      'exam.desc': '阅读：12分钟 → 非言语：24分钟。可提前提交，超时自动结束。',
         'exam.status': '考试状态',
         'exam.start': '开始考试',
         'exam.submit': '提交答案',
@@ -998,7 +1375,7 @@
         'review.clear': '清空错题'
       },
       'ja-JP': {
-        'home.title': 'WebTest',
+        'home.title': 'SPI網測平台',
         'common.save': '保存',
         'common.loading': '読み込み中...',
 
@@ -1068,13 +1445,13 @@
         'bank.clear': '問題集をクリア',
 
         'practice.title': '練習',
-        'practice.desc': '読解：50秒/問、計算：40秒/問。終了後に解答と解説を表示。',
+        'practice.desc': '言語：30秒/問、非言語：60秒/問。終了後に解答と解説を表示。',
         'practice.choose': '練習タイプ',
         'practice.startReading': '読解（1セット）開始',
         'practice.startCalc': '計算（1問）開始',
 
         'exam.title': '試験',
-        'exam.desc': '読解10セット（35分）→ 計算30問（25分）。提出可、時間切れで自動終了。',
+        'exam.desc': '読解12分 → 非言語24分。提出可、時間切れで自動終了。',
         'exam.status': '状態',
         'exam.start': '開始',
         'exam.submit': '提出',
@@ -1084,7 +1461,7 @@
         'review.clear': '全削除'
       },
       'en-US': {
-        'home.title': 'WebTest',
+        'home.title': 'SPI Web Test',
         'common.save': 'Save',
         'common.loading': 'Loading...',
 
@@ -1154,13 +1531,13 @@
         'bank.clear': 'Clear bank',
 
         'practice.title': 'Practice',
-        'practice.desc': 'Reading: 50s/question; Math: 40s/question. Shows answers & explanations after.',
+        'practice.desc': 'Verbal: 30s/question; Non-verbal: 60s/question. Shows answers & explanations after.',
         'practice.choose': 'Practice type',
         'practice.startReading': 'Start Reading (1 set)',
         'practice.startCalc': 'Start Math (1 question)',
 
         'exam.title': 'Exam',
-        'exam.desc': 'Reading: 10 sets (35min) → Math: 30 questions (25min). Auto end on timeout.',
+        'exam.desc': 'Verbal: 12 min → Non-verbal: 24 min. Auto end on timeout.',
         'exam.status': 'Status',
         'exam.start': 'Start exam',
         'exam.submit': 'Submit',
@@ -1212,17 +1589,19 @@
       practice: document.getElementById('panel-practice'),
       exam: document.getElementById('panel-exam'),
       review: document.getElementById('panel-review'),
-      admin: document.getElementById('panel-admin')
+      admin: document.getElementById('panel-admin'),
+      settings: document.getElementById('panel-settings')
     };
 
     function openPanel(name) {
-      Object.values(panels).forEach(p => p.classList.add('hidden'));
+      Object.values(panels).forEach(p => p && p.classList.add('hidden'));
       document.getElementById('homePanel')?.classList.add('hidden');
       const p = panels[name];
       if (p) {
         p.classList.remove('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
+      if (name === 'settings') syncUserPanelInputs();
       refreshAllLists();
     }
 
@@ -1391,7 +1770,7 @@
       }
 
       wrap.innerHTML = list.slice().reverse().map(q => {
-        const badge = q.type === 'reading' ? '阅读题' : '计算题';
+        const badge = getTypeLabel(q.type);
         const title = q.type === 'reading' ? (q.passage || '').slice(0, 38) : (q.stem || '').slice(0, 38);
         return `
           <div class="rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
@@ -1833,6 +2212,11 @@
         .replaceAll("'", '&#39;');
     }
 
+    function getTypeLabel(type) {
+      const map = { verbal1:'单词题', verbal2:'长文选择题', verbal3:'排序题', verbal4:'单词填空题', verbal5:'综合理解题', reading:'单选题', nonVerbal1:'填空计算题', nonVerbal2:'综合计算题', calc:'逻辑题' };
+      return map[type] || type || '—';
+    }
+
     function renderBank() {
       const bank = loadBank();
       const el = document.getElementById('bankList');
@@ -1842,7 +2226,7 @@
         return;
       }
       const items = bank.slice().reverse().map(q => {
-        const badge = q.type === 'reading' ? '阅读题' : '计算题';
+        const badge = getTypeLabel(q.type);
         const title = q.type === 'reading' ? (q.passage || '').slice(0, 28) : (q.stem || '').slice(0, 28);
         return `
           <div class="mt-2 rounded-2xl border border-ink-200 bg-white p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
@@ -1864,25 +2248,67 @@
         el.innerHTML = `<div class="rounded-2xl border border-ink-200 bg-white p-4 text-sm text-ink-600 dark:border-white/10 dark:bg-white/5 dark:text-ink-300">暂无错题</div>`;
         return;
       }
-      el.innerHTML = wrong.slice().reverse().map(w => {
-        const badge = w.type === 'reading' ? '阅读题' : '计算题';
-        const title = w.type === 'reading' ? (w.passage || '').slice(0, 28) : (w.stem || '').slice(0, 28);
-        return `
-          <div class="mb-3 rounded-2xl border border-ink-200 bg-white p-4 text-sm text-ink-700 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <div class="font-semibold">${escapeHtml(badge)} · ${escapeHtml(title || '（无标题）')}</div>
-                <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">做错时间：${new Date(w.at).toLocaleString()}</div>
-              </div>
-              <button class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-del-wrong="${escapeHtml(w.id)}">删除</button>
+
+      const practiceList = wrong.filter(w => w.source === 'practice');
+      const examList = wrong.filter(w => w.source === 'exam');
+      const otherList = wrong.filter(w => !w.source || (w.source !== 'practice' && w.source !== 'exam'));
+
+      function renderWrongGroup(list, groupLabel) {
+        if (!list.length) {
+          return `
+            <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-xs text-ink-600 dark:border-white/10 dark:bg-white/5 dark:text-ink-300">
+              当前暂无此来源的错题。
             </div>
-            <details class="mt-3">
-              <summary class="cursor-pointer text-xs font-semibold text-ink-500 dark:text-ink-400">展开详情</summary>
-              <div class="mt-2 text-sm">${escapeHtml(w.detail || '')}</div>
-            </details>
-          </div>
-        `;
-      }).join('');
+          `;
+        }
+        return list.slice().reverse().map(w => {
+          const badgeType = getTypeLabel(w.type);
+          const title = w.type === 'reading' ? (w.passage || '').slice(0, 28) : (w.stem || '').slice(0, 28);
+          const qKey = w.id; // 这里仅用于本机反馈聚合，题目标识仍以题库为准
+          return `
+            <div class="mb-3 rounded-2xl border border-ink-200 bg-white p-4 text-sm text-ink-700 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="font-semibold">${escapeHtml(badgeType)} · ${escapeHtml(title || '（无标题）')}</div>
+                  <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">做错时间：${new Date(w.at).toLocaleString()}</div>
+                </div>
+                <button class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-del-wrong="${escapeHtml(w.id)}">删除</button>
+              </div>
+              <details class="mt-3">
+                <summary class="cursor-pointer text-xs font-semibold text-ink-500 dark:text-ink-400">展开详情</summary>
+                <div class="mt-2 text-sm whitespace-pre-wrap">${escapeHtml(w.detail || '')}</div>
+              </details>
+              <div class="mt-3 rounded-2xl border border-ink-200 bg-ink-50 p-3 text-xs text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
+                <div class="font-semibold">认为标准答案有问题？</div>
+                <div class="mt-1 text-[11px] text-ink-500 dark:text-ink-400">这里提交的反馈仅保存在本机，管理员可以在后台“用户错题反馈”中查看汇总结果。</div>
+                <div class="mt-2">
+                  ${renderFeedbackChoiceButtons({ qKey, type: w.type === 'reading' ? 'reading' : 'calc' })}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      el.innerHTML = `
+        <div class="space-y-4">
+          <section>
+            <div class="mb-2 text-sm font-semibold text-ink-700 dark:text-ink-100">练习模式错题</div>
+            ${renderWrongGroup(practiceList, '练习')}
+          </section>
+          <section>
+            <div class="mb-2 text-sm font-semibold text-ink-700 dark:text-ink-100">考试模式错题</div>
+            ${renderWrongGroup(examList, '考试')}
+          </section>
+          ${otherList.length ? `
+            <section>
+              <div class="mb-2 text-sm font-semibold text-ink-700 dark:text-ink-100">来源不明（历史数据）</div>
+              <div class="mb-1 text-[11px] text-ink-500 dark:text-ink-400">这些错题是在更新来源字段之前产生的，仍然可以查看与删除。</div>
+              ${renderWrongGroup(otherList, '其他')}
+            </section>
+          ` : ''}
+        </div>
+      `;
 
       el.querySelectorAll('[data-del-wrong]').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1894,6 +2320,9 @@
           showToast('已删除');
         });
       });
+
+      // 错题本里的“答案有误”反馈按钮需要重新挂载事件
+      wireFeedbackButtons(el);
     }
 
     function refreshAllLists() {
@@ -1902,28 +2331,28 @@
       refreshStats();
     }
 
-    // ===== 上传题目：阅读题/计算题 =====
-    const btnTypeReading = document.getElementById('btnTypeReading');
-    const btnTypeCalc = document.getElementById('btnTypeCalc');
-    const formReading = document.getElementById('formReading');
-    const formCalc = document.getElementById('formCalc');
+    // ===== 上传题目：9 种题型 =====
+    const UPLOAD_FORM_IDS = ['formVerbal1','formVerbal2','formVerbal3','formVerbal4','formVerbal5','formReading','formNonVerbal1','formNonVerbal2','formCalc'];
+    const UPLOAD_TYPE_IDS = ['verbal1','verbal2','verbal3','verbal4','verbal5','reading','nonVerbal1','nonVerbal2','calc'];
 
     function setUploadType(type) {
-      if (type === 'reading') {
-        formReading.classList.remove('hidden');
-        formCalc.classList.add('hidden');
-        btnTypeReading.classList.add('bg-ink-50');
-        btnTypeCalc.classList.remove('bg-ink-50');
-      } else {
-        formReading.classList.add('hidden');
-        formCalc.classList.remove('hidden');
-        btnTypeCalc.classList.add('bg-ink-50');
-        btnTypeReading.classList.remove('bg-ink-50');
-      }
+      UPLOAD_FORM_IDS.forEach((fid, i) => {
+        const form = document.getElementById(fid);
+        if (form) form.classList.toggle('hidden', UPLOAD_TYPE_IDS[i] !== type);
+      });
+      document.querySelectorAll('.uploadTypeBtn').forEach(btn => {
+        const t = btn.getAttribute('data-upload-type');
+        if (t === type) { btn.classList.add('bg-ink-50'); btn.classList.remove('bg-white'); }
+        else { btn.classList.remove('bg-ink-50'); btn.classList.add('bg-white'); }
+      });
     }
 
-    btnTypeReading?.addEventListener('click', () => setUploadType('reading'));
-    btnTypeCalc?.addEventListener('click', () => setUploadType('calc'));
+    document.getElementById('panel-upload')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.uploadTypeBtn');
+      if (!btn) return;
+      const type = btn.getAttribute('data-upload-type');
+      if (type) setUploadType(type);
+    });
 
     document.getElementById('btnAddReading')?.addEventListener('click', () => {
       const passage = (document.getElementById('readingText').value || '').trim();
@@ -1964,7 +2393,7 @@
       saveBank(bank);
 
       hint.textContent = '';
-      showToast('已添加阅读题');
+      showToast('提交完成，已自动清除之前填写的内容');
       refreshAllLists();
 
       // 添加成功后清空表单，便于继续录入
@@ -1978,6 +2407,92 @@
 
       // 光标回到长文输入框
       document.getElementById('readingText').focus();
+    });
+
+    function addBankItem(item) {
+      const bank = loadBank();
+      bank.push(item);
+      saveBank(bank);
+      showToast('提交完成，已自动清除之前填写的内容');
+      refreshAllLists();
+    }
+
+    document.getElementById('btnAddVerbal1')?.addEventListener('click', () => {
+      const words = (document.getElementById('v1_words').value || '').trim().split('\n').map(s => s.trim()).filter(Boolean);
+      const opts = { A: (document.getElementById('v1_optA').value || '').trim(), B: (document.getElementById('v1_optB').value || '').trim(), C: (document.getElementById('v1_optC').value || '').trim(), D: (document.getElementById('v1_optD').value || '').trim() };
+      const ans = [document.getElementById('v1_a1').value, document.getElementById('v1_a2').value, document.getElementById('v1_a3').value, document.getElementById('v1_a4').value, document.getElementById('v1_a5').value];
+      if (words.length < 5 || !opts.A || !opts.B || !opts.C || !opts.D) { showToast('请填满5个词语和4个选项'); return; }
+      addBankItem({ id: uid(), type: 'verbal1', createdAt: Date.now(), words: words.slice(0,5), options: opts, answers: ans.slice(0,5) });
+      document.getElementById('v1_words').value = '';
+      ['v1_optA','v1_optB','v1_optC','v1_optD'].forEach(id => { document.getElementById(id).value = ''; });
+      ['v1_a1','v1_a2','v1_a3','v1_a4','v1_a5'].forEach(id => {
+        const hidden = document.getElementById(id);
+        if (hidden) hidden.value = 'A';
+        const group = document.querySelector(`[data-ans-group=\"${id}\"]`);
+        if (group) {
+          group.querySelectorAll('.ans-btn').forEach(b => b.classList.remove('active'));
+          const first = group.querySelector('.ans-btn[data-ans-val=\"A\"]');
+          if (first) first.classList.add('active');
+        }
+      });
+    });
+    document.getElementById('btnAddVerbal2')?.addEventListener('click', () => {
+      const questions = (document.getElementById('v2_questions').value || '').trim().split('\n').map(s => s.trim()).filter(Boolean);
+      const opts = { A: (document.getElementById('v2_optA').value || '').trim(), B: (document.getElementById('v2_optB').value || '').trim(), C: (document.getElementById('v2_optC').value || '').trim(), D: (document.getElementById('v2_optD').value || '').trim(), E: (document.getElementById('v2_optE').value || '').trim() };
+      const ans = [document.getElementById('v2_a1').value, document.getElementById('v2_a2').value, document.getElementById('v2_a3').value];
+      if (questions.length < 3) { showToast('请填满3个问和5个选项'); return; }
+      addBankItem({ id: uid(), type: 'verbal2', createdAt: Date.now(), questions: questions.slice(0,3), options: opts, answers: ans });
+      document.getElementById('v2_questions').value = ''; ['v2_optA','v2_optB','v2_optC','v2_optD','v2_optE'].forEach(id => { document.getElementById(id).value = ''; }); ['v2_a1','v2_a2','v2_a3'].forEach(id => { document.getElementById(id).value = 'A'; });
+    });
+    document.getElementById('btnAddVerbal3')?.addEventListener('click', () => {
+      const passage = (document.getElementById('v3_passage').value || '').trim();
+      const opts = { A: (document.getElementById('v3_optA').value || '').trim(), B: (document.getElementById('v3_optB').value || '').trim(), C: (document.getElementById('v3_optC').value || '').trim(), D: (document.getElementById('v3_optD').value || '').trim() };
+      const answer = (document.getElementById('v3_answer').value || '').trim().toUpperCase().slice(0,4);
+      if (!passage || !opts.A || !opts.B || !opts.C || !opts.D || answer.length < 4) { showToast('请填满文章、4选项和4位答案'); return; }
+      addBankItem({ id: uid(), type: 'verbal3', createdAt: Date.now(), passage, options: opts, answer });
+      document.getElementById('v3_passage').value = ''; ['v3_optA','v3_optB','v3_optC','v3_optD','v3_answer'].forEach(id => { document.getElementById(id).value = ''; });
+    });
+    document.getElementById('btnAddVerbal4')?.addEventListener('click', () => {
+      const passage = (document.getElementById('v4_passage').value || '').trim();
+      const opts = { A: (document.getElementById('v4_optA').value || '').trim(), B: (document.getElementById('v4_optB').value || '').trim(), C: (document.getElementById('v4_optC').value || '').trim() };
+      const ans = [document.getElementById('v4_a1').value, document.getElementById('v4_a2').value, document.getElementById('v4_a3').value];
+      if (!passage || !opts.A || !opts.B || !opts.C) { showToast('请填满文章和3选项'); return; }
+      addBankItem({ id: uid(), type: 'verbal4', createdAt: Date.now(), passage, options: opts, answers: ans });
+      document.getElementById('v4_passage').value = ''; ['v4_optA','v4_optB','v4_optC'].forEach(id => { document.getElementById(id).value = ''; }); ['v4_a1','v4_a2','v4_a3'].forEach(id => { document.getElementById(id).value = 'A'; });
+    });
+    document.getElementById('btnAddVerbal5')?.addEventListener('click', () => {
+      const passage = (document.getElementById('v5_passage').value || '').trim();
+      const q1opts = { A: (document.getElementById('v5_q1A').value || '').trim(), B: (document.getElementById('v5_q1B').value || '').trim(), C: (document.getElementById('v5_q1C').value || '').trim(), D: (document.getElementById('v5_q1D').value || '').trim() };
+      const a1 = document.getElementById('v5_a1').value;
+      const q2 = (document.getElementById('v5_q2').value || '').trim(), a2 = (document.getElementById('v5_a2').value || '').trim();
+      const q3stem = (document.getElementById('v5_q3stem').value || '').trim(), q3opts = { A: (document.getElementById('v5_q3A').value || '').trim(), B: (document.getElementById('v5_q3B').value || '').trim(), C: (document.getElementById('v5_q3C').value || '').trim(), D: (document.getElementById('v5_q3D').value || '').trim() }, a3 = document.getElementById('v5_a3').value;
+      if (!passage || !q1opts.A || !q2 || !q3stem || !q3opts.A) { showToast('请填满文章、3小题和选项'); return; }
+      addBankItem({ id: uid(), type: 'verbal5', createdAt: Date.now(), passage, q1: { options: q1opts, answer: a1 }, q2: { stem: q2, answer: a2 }, q3: { stem: q3stem, options: q3opts, answer: a3 } });
+      document.getElementById('v5_passage').value = ''; ['v5_q1A','v5_q1B','v5_q1C','v5_q1D','v5_q2','v5_a2','v5_q3stem','v5_q3A','v5_q3B','v5_q3C','v5_q3D'].forEach(id => { document.getElementById(id).value = ''; }); document.getElementById('v5_a1').value = 'A'; document.getElementById('v5_a3').value = 'A';
+    });
+    let nv2ImageDataUrl = '';
+    document.getElementById('nv2_image')?.addEventListener('change', (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      const r = new FileReader(); r.onload = () => { nv2ImageDataUrl = String(r.result || ''); }; r.readAsDataURL(f);
+    });
+    document.getElementById('btnAddNonVerbal1')?.addEventListener('click', () => {
+      const text = (document.getElementById('nv1_items').value || '').trim();
+      const lines = text.split('\n').map(s => s.trim()).filter(Boolean);
+      if (lines.length < 15) { showToast('请至少填15题（每行一题，可写「题干」或「题干|答案」）'); return; }
+      const items = lines.slice(0,15).map(line => { const i = line.indexOf('|'); return i >= 0 ? { stem: line.slice(0,i).trim(), answer: line.slice(i+1).trim() } : { stem: line, answer: '' }; });
+      addBankItem({ id: uid(), type: 'nonVerbal1', createdAt: Date.now(), items });
+      document.getElementById('nv1_items').value = '';
+    });
+    document.getElementById('btnAddNonVerbal2')?.addEventListener('click', () => {
+      const stem = (document.getElementById('nv2_stem').value || '').trim();
+      const q1 = (document.getElementById('nv2_q1').value || '').trim(), a1 = (document.getElementById('nv2_a1').value || '').trim();
+      const q2 = (document.getElementById('nv2_q2').value || '').trim();
+      const opts = { A: (document.getElementById('nv2_optA').value || '').trim(), B: (document.getElementById('nv2_optB').value || '').trim(), C: (document.getElementById('nv2_optC').value || '').trim(), D: (document.getElementById('nv2_optD').value || '').trim(), E: (document.getElementById('nv2_optE').value || '').trim(), F: (document.getElementById('nv2_optF').value || '').trim() };
+      const a2 = document.getElementById('nv2_a2').value;
+      if (!stem || !nv2ImageDataUrl || !q1 || !q2) { showToast('请填满大题干、上传图片和两道小题'); return; }
+      addBankItem({ id: uid(), type: 'nonVerbal2', createdAt: Date.now(), stem, imageDataUrl: nv2ImageDataUrl, q1: { stem: q1, answer: a1 }, q2: { stem: q2, options: opts, answer: a2 } });
+      document.getElementById('nv2_stem').value = ''; document.getElementById('nv2_image').value = ''; nv2ImageDataUrl = ''; document.getElementById('nv2_q1').value = ''; document.getElementById('nv2_a1').value = ''; document.getElementById('nv2_q2').value = ''; ['nv2_optA','nv2_optB','nv2_optC','nv2_optD','nv2_optE','nv2_optF'].forEach(id => { document.getElementById(id).value = ''; }); document.getElementById('nv2_a2').value = 'A';
     });
 
     // 计算题图片 -> base64
@@ -2034,7 +2549,7 @@
       saveBank(bank);
 
       hint.textContent = '';
-      showToast('已添加计算题');
+      showToast('提交完成，已自动清除之前填写的内容');
       refreshAllLists();
 
       // 添加成功后清空表单并隐藏预览，便于继续录入
@@ -2078,13 +2593,28 @@
       return `${String(Math.floor(s / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`;
     }
 
+    const RING_OUTER_CIRC = 2 * Math.PI * 26;
+    const RING_INNER_CIRC = 2 * Math.PI * 18;
+    let practiceRingAnsweredRatio = 0;
+    let practiceRingSecondsTotal = 30;
+
+    function updatePracticeProgressRing(timeUsedRatio, answeredRatio) {
+      const outer = document.getElementById('practiceRingTime');
+      const inner = document.getElementById('practiceRingQ');
+      if (outer) outer.style.strokeDashoffset = String(RING_OUTER_CIRC * (1 - Math.min(1, timeUsedRatio)));
+      if (inner) inner.style.strokeDashoffset = String(RING_INNER_CIRC * (1 - Math.min(1, answeredRatio)));
+    }
+
     function startCountdown(seconds, onTimeout) {
       stopPracticeTimer();
       practiceDeadline = Date.now() + seconds * 1000;
+      practiceRingSecondsTotal = seconds;
       const el = document.getElementById('practiceTimer');
       function tick() {
         const remain = (practiceDeadline - Date.now()) / 1000;
         if (el) el.textContent = formatSec(remain);
+        const timeUsedRatio = remain <= 0 ? 1 : 1 - remain / seconds;
+        updatePracticeProgressRing(timeUsedRatio, practiceRingAnsweredRatio);
         if (remain <= 0) {
           stopPracticeTimer();
           onTimeout?.();
@@ -2109,6 +2639,7 @@
       wrong.push({
         id: uid(),
         at: Date.now(),
+        source: 'practice',
         type: q.type,
         passage: q.passage,
         stem: q.stem,
@@ -2130,6 +2661,8 @@
       const body = document.getElementById('practiceBody');
       const title = document.getElementById('practiceTitle');
       title.textContent = `阅读练习（第 ${idx + 1} / 4 题）`;
+      practiceRingAnsweredRatio = idx / 4;
+      updatePracticeProgressRing(practiceDeadline ? 1 - (practiceDeadline - Date.now()) / 1000 / practiceRingSecondsTotal : 0, practiceRingAnsweredRatio);
 
       const options = [
         { k: 'A', text: `A. ${q.options.A}` },
@@ -2147,9 +2680,9 @@
           <div class="mt-2 text-sm font-semibold">${escapeHtml(q.stem)}</div>
           <div class="mt-3 grid gap-2">
             ${options.map(o => `
-              <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
-                <input type="radio" name="practiceAns" value="${o.k}" class="mt-1" />
-                <div class="text-sm">${escapeHtml(o.text)}</div>
+              <label class="option-card flex w-full cursor-pointer select-none items-center gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 hover:bg-ink-50/50 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10">
+                <input type="radio" name="practiceAns" value="${o.k}" class="peer sr-only" />
+                <span class="text-sm flex-1 min-w-0">${escapeHtml(o.text)}</span>
               </label>
             `).join('')}
           </div>
@@ -2161,7 +2694,9 @@
       const body = document.getElementById('practiceBody');
       const title = document.getElementById('practiceTitle');
       title.textContent = `计算练习（1题）`;
-      const optionKeys = ['A','B','C','D','E'].filter(k => item.options && item.options[k]);
+      practiceRingAnsweredRatio = 0;
+      updatePracticeProgressRing(0, 0);
+      const optionKeys = getAnswerChoicesByType('calc');
       body.innerHTML = `
         <div class="rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
           <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">题目图片</div>
@@ -2174,9 +2709,9 @@
           <div class="mt-2 text-sm font-semibold">${escapeHtml(item.stem)}</div>
           <div class="mt-3 grid gap-2">
             ${optionKeys.map(k => `
-              <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
-                <input type="radio" name="practiceAns" value="${k}" class="mt-1" />
-                <div class="text-sm">${k}. ${escapeHtml(item.options[k])}</div>
+              <label class="option-card flex w-full cursor-pointer select-none items-center gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 hover:bg-ink-50/50 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10">
+                <input type="radio" name="practiceAns" value="${k}" class="peer sr-only" />
+                <span class="text-sm flex-1 min-w-0">${k}. ${escapeHtml((item.options && item.options[k]) || '')}</span>
               </label>
             `).join('')}
           </div>
@@ -2224,6 +2759,18 @@
       if (which === 'reading') makeActive(btnR);
       if (which === 'calc') makeActive(btnC);
     }
+
+    // 未支持的题型（言语1-5、非言语1-2）点击时提示
+    document.getElementById('panel-practice')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('.practiceTypeBtn');
+      if (!btn) return;
+      const t = btn.getAttribute('data-type');
+      if (t && t !== 'reading' && t !== 'calc') {
+        setPracticeStartActive('none');
+        document.getElementById('practiceHint').textContent = '暂无该题型题目，请先在管理员中录入。当前仅支持「单选题」与「逻辑题」。';
+        showToast('暂无该题型题目');
+      }
+    });
 
     // 初始：两个都无色
     setPracticeStartActive('none');
@@ -2301,8 +2848,8 @@
         showToast('时间到，已自动结算');
       }
 
-      // 整组 150 秒倒计时
-      startCountdown(150, finalizeReadingGroupByTimeout);
+      // 整组 120 秒倒计时（4 题 × 30 秒）
+      startCountdown(120, finalizeReadingGroupByTimeout);
     });
 
     document.getElementById('btnStartPracticeCalc')?.addEventListener('click', () => {
@@ -2331,7 +2878,8 @@
       nextBtn.classList.add('hidden');
       resultEl.classList.add('hidden');
 
-      startCountdown(40, () => {
+      // 非言语题每题 60 秒
+      startCountdown(60, () => {
         showToast('时间到');
         document.getElementById('btnPracticeSubmit').click();
       });
@@ -2480,7 +3028,7 @@
         wireFeedbackButtons(resultEl);
 
         resultEl.classList.remove('hidden');
-        showToast('本组阅读已完成');
+        showToast('提交完成');
 
         refreshAllLists();
 
@@ -2533,7 +3081,7 @@
 
       submitBtn.classList.add('hidden');
       nextBtn.classList.add('hidden');
-      showToast('计算练习已完成');
+      showToast('提交完成');
 
       refreshAllLists();
     });
@@ -2550,8 +3098,8 @@
       practiceState.idx += 1;
       renderPracticeReadingQuestion(practiceState.group, practiceState.idx);
 
-      // 倒计时重置
-      startCountdown(50, () => {
+      // 倒计时重置（每题 30 秒）
+      startCountdown(30, () => {
         showToast('时间到');
         // 超时视为未选（但按你的规则必须选择，这里就提示并不让过，直接收录为未选并进入下一题）
         // 实际处理：超时自动按未选提交并进入下一题/汇总
@@ -2569,7 +3117,8 @@
         if (idx < 3) {
           practiceState.idx += 1;
           renderPracticeReadingQuestion(group, practiceState.idx);
-          startCountdown(50, arguments.callee);
+          // 后续每题同样 30 秒
+          startCountdown(30, arguments.callee);
           syncPracticeButtons();
         } else {
           practiceState.stage = 'review';
@@ -2587,7 +3136,7 @@
       refreshAllLists();
     });
 
-    // ===== 考试模式（核心：阅读10组35分钟 -> 计算30题25分钟） =====
+    // ===== 考试模式（核心：阅读10组12分钟 -> 计算30题24分钟） =====
     let examTimerId = null;
     let examDeadline = 0;
     let examState = null;
@@ -2598,13 +3147,28 @@
       examDeadline = 0;
     }
 
+    let examRingSectionSeconds = 12 * 60;
+    function updateExamProgressRing(timeUsedRatio, answeredRatio) {
+      const outer = document.getElementById('examRingTime');
+      const inner = document.getElementById('examRingQ');
+      const stageTimer = document.getElementById('examTimerInStage');
+      if (outer) outer.style.strokeDashoffset = String(RING_OUTER_CIRC * (1 - Math.min(1, timeUsedRatio)));
+      if (inner) inner.style.strokeDashoffset = String(RING_INNER_CIRC * (1 - Math.min(1, answeredRatio)));
+      if (stageTimer && examState) stageTimer.textContent = formatSec(Math.max(0, (examDeadline - Date.now()) / 1000));
+    }
+
     function startExamCountdown(seconds, onTimeout) {
       stopExamTimer();
       examDeadline = Date.now() + seconds * 1000;
+      examRingSectionSeconds = seconds;
       const el = document.getElementById('examTimer');
+      const stageTimer = document.getElementById('examTimerInStage');
       function tick() {
         const remain = (examDeadline - Date.now()) / 1000;
         if (el) el.textContent = formatSec(remain);
+        if (stageTimer) stageTimer.textContent = formatSec(remain);
+        const timeUsedRatio = remain <= 0 ? 1 : 1 - remain / seconds;
+        if (examState) updateExamProgressRing(timeUsedRatio, examState.answered / Math.max(1, examState.total));
         if (remain <= 0) {
           stopExamTimer();
           onTimeout?.();
@@ -2626,13 +3190,20 @@
       const body = document.getElementById('examBody');
       const prog = document.getElementById('examProgress');
       if (!examState) return;
+      const answeredRatio = examState.answered / Math.max(1, examState.total);
+      const remain = examDeadline ? (examDeadline - Date.now()) / 1000 : 0;
+      const sectionSec = examRingSectionSeconds || 12 * 60;
+      const timeUsedRatio = remain <= 0 ? 1 : Math.max(0, 1 - remain / sectionSec);
+      updateExamProgressRing(timeUsedRatio, answeredRatio);
+      const stageTimer = document.getElementById('examTimerInStage');
+      if (stageTimer) stageTimer.textContent = formatSec(Math.max(0, remain));
 
       if (examState.phase === 'reading') {
         const g = examState.readingSets[examState.index];
         const qi = examState.subIndex;
         const q = g.questions[qi];
         title.textContent = `阅读（第 ${examState.index + 1} / 10 组，第 ${qi + 1} / 4 题）`;
-        prog.textContent = `${examState.answered}/${examState.total}`;
+        if (prog) prog.textContent = `${examState.answered}/${examState.total}`;
 
         body.innerHTML = `
           <div class="rounded-2xl border border-ink-200 bg-ink-50 p-3 text-sm text-ink-700 dark:border-white/10 dark:bg-white/5 dark:text-ink-200">
@@ -2644,9 +3215,9 @@
             <div class="mt-2 text-sm font-semibold">${escapeHtml(q.stem)}</div>
             <div class="mt-3 grid gap-2">
               ${['A','B','C'].map(k => `
-                <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
-                  <input type="radio" name="examAns" value="${k}" class="mt-1" />
-                  <div class="text-sm">${k}. ${escapeHtml(q.options[k])}</div>
+                <label class="option-card flex w-full cursor-pointer select-none items-center gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 hover:bg-ink-50/50 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10">
+                  <input type="radio" name="examAns" value="${k}" class="peer sr-only" />
+                  <span class="text-sm flex-1 min-w-0">${k}. ${escapeHtml(q.options[k])}</span>
                 </label>
               `).join('')}
             </div>
@@ -2655,7 +3226,7 @@
       } else {
         const item = examState.calcItems[examState.index];
         title.textContent = `计算（第 ${examState.index + 1} / 30 题）`;
-        prog.textContent = `${examState.answered}/${examState.total}`;
+        if (prog) prog.textContent = `${examState.answered}/${examState.total}`;
 
         body.innerHTML = `
           <div class="rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
@@ -2666,10 +3237,10 @@
             <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">题干</div>
             <div class="mt-2 text-sm font-semibold">${escapeHtml(item.stem)}</div>
             <div class="mt-3 grid gap-2">
-              ${['A','B','C','D'].map(k => `
-                <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
-                  <input type="radio" name="examAns" value="${k}" class="mt-1" />
-                  <div class="text-sm">${k}. ${escapeHtml(item.options[k])}</div>
+              ${['A','B','C','D','E'].map(k => `
+                <label class="option-card flex w-full cursor-pointer select-none items-center gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 hover:bg-ink-50/50 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10">
+                  <input type="radio" name="examAns" value="${k}" class="peer sr-only" />
+                  <span class="text-sm flex-1 min-w-0">${k}. ${escapeHtml((item.options && item.options[k]) || '')}</span>
                 </label>
               `).join('')}
             </div>
@@ -2685,7 +3256,13 @@
 
     function pushWrongFromExam(detail) {
       const wrong = loadWrong();
-      wrong.push({ id: uid(), at: Date.now(), type: examState.phase === 'reading' ? 'reading' : 'calc', detail });
+      wrong.push({
+        id: uid(),
+        at: Date.now(),
+        source: 'exam',
+        type: examState.phase === 'reading' ? 'reading' : 'calc',
+        detail
+      });
       saveWrong(wrong);
     }
 
@@ -2733,6 +3310,8 @@
         };
         out.answer = String(out.answer || 'A').trim();
         out.explain = String(out.explain || '');
+      } else if (['verbal1','verbal2','verbal3','verbal4','verbal5','nonVerbal1','nonVerbal2'].indexOf(out.type) >= 0) {
+        // 其他 7 种题型：仅确保 id/createdAt，其余原样保留
       } else {
         return null;
       }
@@ -2745,6 +3324,8 @@
       if (!out.id) out.id = uid();
       if (!out.at) out.at = Date.now();
       out.type = out.type === 'reading' || out.type === 'calc' ? out.type : '';
+      // 源自练习 or 考试，用于在错题回顾中分组展示
+      out.source = out.source === 'practice' || out.source === 'exam' ? out.source : (out.source || '');
       out.detail = String(out.detail || '');
       out.passage = out.passage ? String(out.passage) : undefined;
       out.stem = out.stem ? String(out.stem) : undefined;
@@ -2812,8 +3393,8 @@
           examState.phase = 'calc';
           examState.index = 0;
           examState.subIndex = 0;
-          document.getElementById('examHint').textContent = '阅读阶段结束，进入计算阶段（25分钟）';
-          startExamCountdown(25 * 60, () => finishExam(true));
+          document.getElementById('examHint').textContent = '阅读阶段结束，进入计算阶段（24分钟）';
+          startExamCountdown(24 * 60, () => finishExam(true));
         }
       } else {
         examState.index += 1;
@@ -2865,7 +3446,7 @@
       // 同步到错题本
       wrongDetail.forEach(d => pushWrongFromExam(d.detail));
       refreshAllLists();
-      showToast('考试已结束');
+      showToast('提交完成，考试已结束');
     }
 
     document.getElementById('btnStartExam')?.addEventListener('click', () => {
@@ -2905,20 +3486,19 @@
         wrongDetails: []
       };
 
-      document.getElementById('examHint').textContent = '阅读阶段进行中（35分钟）';
+      document.getElementById('examHint').textContent = '阅读阶段进行中（12分钟）';
       document.getElementById('examResult').classList.add('hidden');
       showExamUI(true);
       renderExamQuestion();
       syncExamButtons();
-      startExamCountdown(35 * 60, () => {
-        // 到时自动结束阅读阶段并进入计算阶段？你的规则是阅读阶段时间到自动结束考试，再做计算题30题25分钟。
-        // 这里实现：阅读阶段到时，直接进入计算阶段并开始25分钟；计算阶段到时结束。
-        document.getElementById('examHint').textContent = '阅读阶段到时，进入计算阶段（25分钟）';
+      startExamCountdown(12 * 60, () => {
+        // 阅读阶段到时，直接进入计算阶段并开始 24 分钟；计算阶段到时结束。
+        document.getElementById('examHint').textContent = '阅读阶段到时，进入计算阶段（24分钟）';
         examState.phase = 'calc';
         examState.index = 0;
         examState.subIndex = 0;
         renderExamQuestion();
-        startExamCountdown(25 * 60, () => finishExam(true));
+        startExamCountdown(24 * 60, () => finishExam(true));
       });
     });
 
@@ -3059,7 +3639,16 @@
     document.getElementById('xhsCopyLink')?.addEventListener('click', async (e) => {
       e.preventDefault();
       const ok = await copyTextToClipboard('Webtest007');
-      showToast(ok ? '已复制：Webtest007' : '复制失败，请手动复制');
+      if (ok) {
+        showToast('已复制微信号：Webtest007。本站仅用于练习；如需考试协助服务请加此微信。');
+      } else {
+        showToast('复制失败，请手动复制微信号：Webtest007。');
+      }
+    });
+
+    document.getElementById('btnMoreService')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      showToast('更多服务即将上线，敬请期待。');
     });
 
     // ===== 设置语言选择器（页面内 + 顶栏） =====
@@ -3094,7 +3683,7 @@
       return (location.hash || '').toLowerCase().includes('admin') || (location.search || '').toLowerCase().includes('admin');
     }
 
-    const ADMIN_UNLOCK_KEY = 'webtestAdminUnlocked';
+    const ADMIN_UNLOCK_KEY = 'spiAdminUnlocked';
 
     function isAdminUnlocked() {
       return localStorage.getItem(ADMIN_UNLOCK_KEY) === '1';
