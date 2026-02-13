@@ -2327,7 +2327,7 @@
             ${optionKeys.map(k => `
               <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
                 <input type="radio" name="practiceAns" value="${k}" class="mt-1" />
-                <div class="text-sm">${k}. ${escapeHtml((item.options && item.options[k]) || '')}</div>
+                <div class="text-sm">${k}. ${escapeHtml((item.options && item.options[k] != null) ? String(item.options[k]) : '')}</div>
               </label>
             `).join('')}
           </div>
@@ -2822,7 +2822,7 @@
               ${['A','B','C','D','E'].map(k => `
                 <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink-200 bg-white p-3 transition hover:border-ink-300 dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20">
                   <input type="radio" name="examAns" value="${k}" class="mt-1" />
-                  <div class="text-sm">${k}. ${escapeHtml((item.options && item.options[k]) || '')}</div>
+                  <div class="text-sm">${k}. ${escapeHtml((item.options && item.options[k] != null) ? String(item.options[k]) : '')}</div>
                 </label>
               `).join('')}
             </div>
@@ -2888,7 +2888,8 @@
           A: String(out.options.A || ''),
           B: String(out.options.B || ''),
           C: String(out.options.C || ''),
-          D: String(out.options.D || '')
+          D: String(out.options.D || ''),
+          E: String(out.options.E || '')
         };
         out.answer = String(out.answer || 'A').trim();
         out.explain = String(out.explain || '');
