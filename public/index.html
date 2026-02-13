@@ -797,38 +797,74 @@
       localStorage.setItem(LS_ADMIN_TOKEN_KEY, String(t || '').trim());
     }
 
+    // ===== Supabase 配置 =====
+    const SB_URL = 'https://skovyufjkothjxezgkms.supabase.co';
+    const SB_ANON_KEY = 'sb_publishable_T7yFRFRYXwD322QkagdQ2g_s3mnIBmB91f5e8fba543419018e6ec248555e0f76336339'; // 自动填入 anon key
+
     async function postFeedbackToServer(item) {
       try {
-        const res = await fetch('/api/feedback', {
+        const res = await fetch(`${SB_URL}/rest/v1/answer_feedback`, {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(item)
+          headers: {
+            'apikey': SB_ANON_KEY,
+            'Authorization': `Bearer ${SB_ANON_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=minimal'
+          },
+          body: JSON.stringify({
+            page: 'spi-webtest',
+            q_key: item.qKey,
+            q_type: item.type,
+            suggest: item.suggest,
+            user_id: item.userId,
+            ua: navigator.userAgent,
+            ref: location.href
+          })
         });
         return res.ok;
-      } catch {
+      } catch (err) {
+        console.error('Supabase Post Error:', err);
         return false;
       }
     }
 
-    async function fetchFeedbackFromServer(limit) {
-      const token = getAdminTokenLocal();
-      if (!token) throw new Error('missing_admin_token');
-      const res = await fetch(`/api/feedback?limit=${encodeURIComponent(String(limit || 500))}`, {
-        headers: { authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) throw new Error(`http_${res.status}`);
-      const data = await res.json();
-      if (!data || !data.ok || !Array.isArray(data.items)) throw new Error('bad_response');
-      return data.items;
+    async function fetchFeedbackFromServer(limit = 1000) {
+      const serviceRoleKey = getAdminTokenLocal(); // 从管理员输入框拉取 Secret Key
+      if (!serviceRoleKey) throw new Error('missing_admin_token');
+
+      try {
+        const res = await fetch(`${SB_URL}/rest/v1/answer_feedback?select=*&order=created_at.desc&limit=${limit}`, {
+          method: 'GET',
+          headers: {
+            'apikey': serviceRoleKey,
+            'Authorization': `Bearer ${serviceRoleKey}`
+          }
+        });
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        const items = await res.json();
+        // 格式化输出以匹配现有 UI：将 suggest 映射到汇总逻辑
+        return items.map(x => ({
+          ...x,
+          qKey: x.q_key,
+          type: x.q_type,
+          at: new Date(x.created_at).getTime()
+        }));
+      } catch (err) {
+        console.error('Supabase Fetch Error:', err);
+        throw err;
+      }
     }
 
     async function clearFeedbackOnServer() {
-      const token = getAdminTokenLocal();
-      if (!token) return false;
+      const serviceRoleKey = getAdminTokenLocal();
+      if (!serviceRoleKey) return false;
       try {
-        const res = await fetch('/api/feedback', {
+        const res = await fetch(`${SB_URL}/rest/v1/answer_feedback`, {
           method: 'DELETE',
-          headers: { authorization: `Bearer ${token}` }
+          headers: {
+            'apikey': serviceRoleKey,
+            'Authorization': `Bearer ${serviceRoleKey}`
+          }
         });
         return res.ok;
       } catch {
@@ -1403,7 +1439,32 @@
                 <div class="font-semibold">${escapeHtml(badge)} · ${escapeHtml(title || '（无标题）')}</div>
                 <div class="mt-1 text-xs text-ink-500 dark:text-ink-400">${new Date(q.createdAt).toLocaleString()}</div>
               </div>
-              <button class="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 transition hover:scale-[1.01] hover:bg-red-50 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400" data-del-bank="${escapeHtml(q.id)}">删除</button>
+              <div class="flex gap-2">
+                <button class="rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" data-edit-bank="${escapeHtml(q.id)}">编辑</button>
+                <button class="rounded-xl border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 transition hover:scale-[1.01] hover:bg-red-50 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400" data-del-bank="${escapeHtml(q.id)}">删除</button>
+              </div>
+            </div>
+            <div id="edit-form-${escapeHtml(q.id)}" class="hidden mt-3 border-t border-ink-200 pt-3 dark:border-white/10">
+              <div class="grid gap-3">
+                <div>
+                  <label class="text-[11px] font-semibold text-ink-500">题干</label>
+                  <textarea class="edit-stem mt-1 w-full rounded-lg border border-ink-200 bg-white px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5" rows="2">${escapeHtml(q.stem || '')}</textarea>
+                </div>
+                ${q.type === 'calc' ? `
+                  <div class="grid grid-cols-2 gap-2">
+                    ${['A', 'B', 'C', 'D', 'E'].map(k => `
+                      <div>
+                        <label class="text-[11px] font-semibold text-ink-500">选项 ${k}</label>
+                        <input type="text" class="edit-opt-${k} mt-1 w-full rounded-lg border border-ink-200 bg-white px-2 py-1 text-sm dark:border-white/10 dark:bg-white/5" value="${escapeHtml((q.options && q.options[k]) || '')}" />
+                      </div>
+                    `).join('')}
+                  </div>
+                ` : ''}
+                <div class="flex justify-end gap-2">
+                  <button class="rounded-lg bg-ink-100 px-3 py-1 text-xs font-semibold dark:bg-white/10" data-cancel-edit="${escapeHtml(q.id)}">取消</button>
+                  <button class="rounded-lg bg-accent-500 px-3 py-1 text-xs font-semibold text-white" data-save-bank="${escapeHtml(q.id)}">保存</button>
+                </div>
+              </div>
             </div>
           </div>
         `;
@@ -1419,6 +1480,47 @@
           refreshAllLists();
           refreshAdminPanel();
           showToast('已删除');
+        });
+      });
+
+      // 绑定编辑/保存/取消事件
+      wrap.querySelectorAll('[data-edit-bank]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-edit-bank');
+          document.getElementById(`edit-form-${id}`)?.classList.toggle('hidden');
+        });
+      });
+      wrap.querySelectorAll('[data-cancel-edit]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-cancel-edit');
+          document.getElementById(`edit-form-${id}`)?.classList.add('hidden');
+        });
+      });
+      wrap.querySelectorAll('[data-save-bank]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-save-bank');
+          const form = document.getElementById(`edit-form-${id}`);
+          if (!form) return;
+
+          const bank = loadBank();
+          const idx = bank.findIndex(x => x.id === id);
+          if (idx === -1) return;
+
+          const item = bank[idx];
+          const stemEl = form.querySelector('.edit-stem');
+          if (stemEl) item.stem = String(stemEl.value || '');
+
+          if (item.type === 'calc') {
+            item.options = item.options && typeof item.options === 'object' ? item.options : {};
+            ['A', 'B', 'C', 'D', 'E'].forEach(k => {
+              const optEl = form.querySelector(`.edit-opt-${k}`);
+              item.options[k] = optEl ? String(optEl.value || '') : (item.options[k] || '');
+            });
+          }
+
+          saveBank(bank);
+          showToast('已保存');
+          renderAdminQuestionList();
         });
       });
     }
