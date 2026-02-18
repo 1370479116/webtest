@@ -4051,7 +4051,8 @@
 
     // 初始化年份/主题/语言/列表
     async function mainInit() {
-      document.getElementById('year').textContent = new Date().getFullYear();
+      const yearEl = document.getElementById('year');
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
       initTheme();
       setUploadType('reading');
       await initDefaultBankIfNeeded();
