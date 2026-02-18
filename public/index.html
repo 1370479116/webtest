@@ -907,14 +907,14 @@
 
       const saved = pref || 'system';
       if (saved === 'system') {
-        themeIcon.className = 'fa-solid fa-circle-half-stroke';
-        themeLabel.textContent = '跟随系统';
+        if (themeIcon) themeIcon.className = 'fa-solid fa-circle-half-stroke';
+        if (themeLabel) themeLabel.textContent = '跟随系统';
       } else if (saved === 'dark') {
-        themeIcon.className = 'fa-solid fa-moon';
-        themeLabel.textContent = '深色模式';
+        if (themeIcon) themeIcon.className = 'fa-solid fa-moon';
+        if (themeLabel) themeLabel.textContent = '深色模式';
       } else {
-        themeIcon.className = 'fa-solid fa-sun';
-        themeLabel.textContent = '浅色模式';
+        if (themeIcon) themeIcon.className = 'fa-solid fa-sun';
+        if (themeLabel) themeLabel.textContent = '浅色模式';
       }
     }
 
