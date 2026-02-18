@@ -290,7 +290,7 @@
               </div>
               <div class="rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
                 <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">第二步：添加微信获激活码</div>
-                <img id="payModalWechat" src="二维码/我的微信号.JPG" class="mt-2 w-full rounded-2xl border border-ink-200 dark:border-white/10" alt="我的微信号" loading="lazy" />
+                <img id="payModalWechat" src="qrcode/我的微信号.JPG" class="mt-2 w-full rounded-2xl border border-ink-200 dark:border-white/10" alt="我的微信号" loading="lazy" />
               </div>
             </div>
 
@@ -382,7 +382,7 @@
         <div class="mt-6 space-y-4">
           <div class="rounded-2xl border border-ink-200 bg-white p-3 dark:border-white/10 dark:bg-white/5">
             <div class="text-xs font-semibold text-ink-500 text-center">长按识别二维码联系我</div>
-            <img src="二维码/我的微信号.JPG" class="mt-2 w-full rounded-2xl border border-ink-200 dark:border-white/10" alt="我的微信号" />
+            <img src="qrcode/我的微信号.JPG" class="mt-2 w-full rounded-2xl border border-ink-200 dark:border-white/10" alt="我的微信号" />
           </div>
           <p class="text-center text-xs text-ink-500 italic">请备注“委托 + 项目名”</p>
         </div>
@@ -1911,11 +1911,11 @@
       subtitle.textContent = `${plan} · ¥${price} · ${days}天`;
       label.textContent = pay === 'wechat' ? '微信收款码' : '支付宝收款码';
       const qrMap = {
-        wechat: { week: '二维码/微信69.JPG', month: '二维码/微信99.JPG', season: '二维码/微信199.JPG', year: '二维码/微信399.JPG' },
-        alipay: { week: '二维码/支付宝69.JPG', month: '二维码/支付宝99.JPG', season: '二维码/支付宝199.JPG', year: '二维码/支付宝399.JPG' }
+        wechat: { week: 'qrcode/微信69.JPG', month: 'qrcode/微信99.JPG', season: 'qrcode/微信199.JPG', year: 'qrcode/微信399.JPG' },
+        alipay: { week: 'qrcode/支付宝69.JPG', month: 'qrcode/支付宝99.JPG', season: 'qrcode/支付宝199.JPG', year: 'qrcode/支付宝399.JPG' }
       };
       const planKey = plan === '周卡' ? 'week' : (plan === '月卡' ? 'month' : (plan === '季卡' ? 'season' : 'year'));
-      const rawSrc = (qrMap[pay] && qrMap[pay][planKey]) ? qrMap[pay][planKey] : (pay === 'wechat' ? '二维码/微信.JPG' : '二维码/支付宝.PNG');
+      const rawSrc = (qrMap[pay] && qrMap[pay][planKey]) ? qrMap[pay][planKey] : (pay === 'wechat' ? 'qrcode/微信.JPG' : 'qrcode/支付宝.PNG');
       // 使用 encodeURI 处理中文路径，防止本地 file 协议解析失败
       qr.src = encodeURI(rawSrc);
 
