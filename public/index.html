@@ -1915,7 +1915,9 @@
         alipay: { week: '二维码/支付宝69.JPG', month: '二维码/支付宝99.JPG', season: '二维码/支付宝199.JPG', year: '二维码/支付宝399.JPG' }
       };
       const planKey = plan === '周卡' ? 'week' : (plan === '月卡' ? 'month' : (plan === '季卡' ? 'season' : 'year'));
-      qr.src = (qrMap[pay] && qrMap[pay][planKey]) ? qrMap[pay][planKey] : (pay === 'wechat' ? '二维码/微信.JPG' : '二维码/支付宝.PNG');
+      const rawSrc = (qrMap[pay] && qrMap[pay][planKey]) ? qrMap[pay][planKey] : (pay === 'wechat' ? '二维码/微信.JPG' : '二维码/支付宝.PNG');
+      // 使用 encodeURI 处理中文路径，防止本地 file 协议解析失败
+      qr.src = encodeURI(rawSrc);
 
       modal.classList.remove('hidden');
     }
