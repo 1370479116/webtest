@@ -105,6 +105,105 @@
       background: rgba(255,255,255,.07);
       box-shadow: 0 10px 30px rgba(0,0,0,0.30);
     }
+
+    /* 性格测试表格样式 */
+    .personality-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .dark .personality-table {
+      background: #1e293b;
+    }
+    .personality-table th, .personality-table td {
+      border: 1px solid #e2e8f0;
+      padding: 12px;
+      text-align: center;
+    }
+    .dark .personality-table th, .dark .personality-table td {
+      border-color: rgba(255,255,255,.1);
+    }
+    .personality-table .q-num-col {
+      background: #f1f5f9;
+      width: 80px;
+      font-size: 24px;
+      font-weight: bold;
+      color: #64748b;
+    }
+    .dark .personality-table .q-num-col {
+      background: #0f172a;
+      color: #94a3b8;
+    }
+    .personality-table .opt-label {
+      width: 40px;
+      font-weight: bold;
+    }
+    .personality-table .yes-col {
+      width: 60px;
+      background: #f0f9ff;
+    }
+    .dark .personality-table .yes-col {
+      background: rgba(14, 165, 233, 0.1);
+    }
+    .personality-table .no-col {
+      width: 60px;
+      background: #fff1f2;
+    }
+    .dark .personality-table .no-col {
+      background: rgba(244, 63, 94, 0.1);
+    }
+    .personality-table .text-left {
+      text-align: left;
+      padding-left: 16px;
+    }
+    /* 性格测试表格样式 */
+    .personality-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(226,232,240,.8);
+    }
+    .dark .personality-table {
+      background: rgba(255,255,255,.03);
+      border-color: rgba(255,255,255,.1);
+    }
+    .personality-table th, .personality-table td {
+      border: 1px solid rgba(226,232,240,.8);
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .dark .personality-table th, .dark .personality-table td {
+      border-color: rgba(255,255,255,.1);
+    }
+    .personality-table .q-num-col {
+      background: #F1F5F9;
+      width: 100px;
+      font-size: 32px;
+      font-weight: 800;
+      color: #64748B;
+    }
+    .dark .personality-table .q-num-col {
+      background: rgba(255,255,255,.05);
+      color: #94A3B8;
+    }
+    .personality-table .opt-label { width: 40px; font-weight: bold; background: #fff; }
+    .dark .personality-table .opt-label { background: transparent; }
+    .personality-table .yes-col { width: 60px; background: #F0F9FF; color: #0369A1; font-weight: bold; }
+    .dark .personality-table .yes-col { background: rgba(14,165,233,.1); color: #7DD3FC; }
+    .personality-table .no-col { width: 60px; background: #FFF1F2; color: #BE123C; font-weight: bold; }
+    .dark .personality-table .no-col { background: rgba(244,63,94,.1); color: #FDA4AF; }
+    .personality-table .text-left { text-align: left; padding-left: 16px; font-size: 14px; background: #fff; }
+    .dark .personality-table .text-left { background: transparent; }
+    
+    /* 简单的圆形单选美化 */
+    .personality-table input[type="radio"] {
+      width: 20px; height: 20px; cursor: pointer;
+    }
   </style>
 </head>
 <body class="min-h-full bg-white text-ink-800 dark:bg-ink-900 dark:text-ink-100">
@@ -177,6 +276,17 @@
             <div class="text-left">
               <div class="text-base font-semibold">考试模式</div>
               <div class="text-xs text-ink-500 dark:text-ink-400">整套计时提交</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-ink-400"></i>
+        </button>
+
+        <button class="btnMain" type="button" data-open="personality" id="btnHomePersonality">
+          <div class="flex items-center gap-3">
+            <span class="grid h-11 w-11 place-items-center rounded-2xl bg-ink-100 text-ink-700 dark:bg-white/10 dark:text-ink-100"><i class="fa-solid fa-user-gear"></i></span>
+            <div class="text-left">
+              <div class="text-base font-semibold">性格测试</div>
+              <div class="text-xs text-ink-500 dark:text-ink-400">了解你的职场潜能</div>
             </div>
           </div>
           <i class="fa-solid fa-chevron-right text-ink-400"></i>
@@ -361,6 +471,76 @@
       </div>
 
       <div class="mt-6 grid gap-3" id="delegateList"></div>
+    </section>
+
+    <!-- 面板：性格测试 -->
+    <section id="panel-personality" class="hidden mt-4 rounded-2xl border border-rose-200 bg-white p-5 shadow-soft dark:border-rose-500/10 dark:bg-white/5 dark:shadow-soft-dark animate-fadeUp">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-bold text-rose-600 dark:text-rose-400">性格测试</h2>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300">了解您的职业性格特质，匹配最适合您的岗位。</p>
+        </div>
+        <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400">
+          <i class="fa-solid fa-user-tag text-xl"></i>
+        </span>
+      </div>
+
+      <div id="personalityStage" class="mt-6">
+        <div class="flex items-center justify-between mb-4 text-xs text-ink-500">
+          <div id="personalityProgress">进度：0 / 0</div>
+          <button onclick="backHome()" class="hover:text-ink-800">退出测试</button>
+        </div>
+
+        <div id="personalityBody" class="space-y-6">
+          <!-- 动态渲染题目表格 -->
+        </div>
+
+        <div class="mt-8 flex items-center justify-between">
+          <button id="btnPrevPersonality" class="rounded-xl border border-ink-200 bg-white px-5 py-2.5 text-sm font-semibold text-ink-700 transition hover:bg-ink-50 disabled:opacity-30 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" disabled>上一组</button>
+          <button id="btnNextPersonality" class="rounded-xl bg-rose-500 px-8 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-rose-600">下一组</button>
+        </div>
+      </div>
+
+      <div id="personalityResult" class="hidden mt-6 rounded-2xl border border-green-200 bg-green-50 p-5 text-center dark:bg-white/5">
+        <div class="text-lg font-bold text-green-800 dark:text-green-400">测试完成！</div>
+        <p class="mt-2 text-sm text-green-700 dark:text-ink-300">感谢您的参与，您的职业性格画像已生成。</p>
+        <button onclick="backHome()" class="mt-4 rounded-xl bg-green-600 px-6 py-2 text-sm font-bold text-white">返回首页</button>
+      </div>
+    </section>
+
+    <!-- 面板：性格测试 -->
+    <section id="panel-personality" class="hidden mt-4 rounded-2xl border border-rose-200 bg-white p-5 shadow-soft dark:border-rose-500/10 dark:bg-white/5 dark:shadow-soft-dark animate-fadeUp">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-bold text-rose-600 dark:text-rose-400">性格测试</h2>
+          <p class="mt-1 text-sm text-ink-600 dark:text-ink-300">了解您的职业性格特质，匹配最适合您的岗位。</p>
+        </div>
+        <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400">
+          <i class="fa-solid fa-user-tag text-xl"></i>
+        </span>
+      </div>
+
+      <div id="personalityStage" class="mt-6">
+        <div class="flex items-center justify-between mb-4 text-xs text-ink-500">
+          <div id="personalityProgress">进度：0 / 0</div>
+          <button onclick="backHome()" class="hover:text-ink-800">退出测试</button>
+        </div>
+
+        <div id="personalityBody" class="space-y-6">
+          <!-- 动态渲染题目表格 -->
+        </div>
+
+        <div class="mt-8 flex items-center justify-between">
+          <button id="btnPrevPersonality" class="rounded-xl border border-ink-200 bg-white px-5 py-2.5 text-sm font-semibold text-ink-700 transition hover:bg-ink-50 disabled:opacity-30 dark:border-white/10 dark:bg-white/5 dark:text-ink-100" disabled>上一组</button>
+          <button id="btnNextPersonality" class="rounded-xl bg-rose-500 px-8 py-2.5 text-sm font-bold text-white shadow-soft transition hover:bg-rose-600">下一组</button>
+        </div>
+      </div>
+
+      <div id="personalityResult" class="hidden mt-6 rounded-2xl border border-green-200 bg-green-50 p-5 text-center dark:bg-white/5">
+        <div class="text-lg font-bold text-green-800 dark:text-green-400">测试完成！</div>
+        <p class="mt-2 text-sm text-green-700 dark:text-ink-300">感谢您的参与，您的职业性格画像已生成。</p>
+        <button onclick="backHome()" class="mt-4 rounded-xl bg-green-600 px-6 py-2 text-sm font-bold text-white">返回首页</button>
+      </div>
     </section>
 
     <!-- 委托详情弹窗 -->
@@ -1587,7 +1767,8 @@
       review: document.getElementById('panel-review'),
       admin: document.getElementById('panel-admin'),
       vip: document.getElementById('panel-vip'),
-      delegate: document.getElementById('panel-delegate')
+      delegate: document.getElementById('panel-delegate'),
+      personality: document.getElementById('panel-personality')
     };
 
     function openPanel(name) {
@@ -1699,8 +1880,136 @@
       return true;
     }
 
-    document.getElementById('btnVip')?.addEventListener('click', () => openPanel('vip'));
+    // ===== 性格测试逻辑 =====
+    const LS_PERSONALITY_ANS = 'webtestPersonalityAnswers';
+    const LS_TRIAL_PERSONALITY = 'webtestTrialPersonalityDone';
+    
+    // 题目数据占位符（请在此处填入 Word 里的题目）
+    const PERSONALITY_DATA = [
+      {
+        id: 1,
+        items: [
+          { label: 'A', text: '余暇は活動的に過ごす' },
+          { label: 'B', text: '説得力があるほうだ' },
+          { label: 'C', text: '絵や音楽に理解がある' },
+          { label: 'D', text: '仕事の成りゆきが気になる' }
+        ]
+      }
+      // 后续题目按此格式添加...
+    ];
 
+    let personalityIdx = 0;
+
+    function getPersonalityAnswers() {
+      return safeJsonParse(localStorage.getItem(LS_PERSONALITY_ANS), {});
+    }
+
+    function savePersonalityAnswer(qId, label, val) {
+      const ans = getPersonalityAnswers();
+      if (!ans[qId]) ans[qId] = { YES: '', NO: '' };
+      
+      // 行内互斥：如果这一行已经在另一列被选了，则清空另一列的选择
+      if (val === 'YES' && ans[qId].NO === label) ans[qId].NO = '';
+      if (val === 'NO' && ans[qId].YES === label) ans[qId].YES = '';
+      
+      // 列内互斥：记录该列选中的是哪一行（label）
+      ans[qId][val] = label;
+      
+      localStorage.setItem(LS_PERSONALITY_ANS, JSON.stringify(ans));
+      renderPersonalityGroup(); // 重新渲染以同步 UI 状态
+    }
+
+    function renderPersonalityGroup() {
+      const group = PERSONALITY_DATA[personalityIdx];
+      const body = document.getElementById('personalityBody');
+      const progress = document.getElementById('personalityProgress');
+      const ans = getPersonalityAnswers();
+
+      if (!group || !body) return;
+
+      const currentAns = ans[group.id] || { YES: '', NO: '' };
+      progress.textContent = `进度：${personalityIdx + 1} / ${PERSONALITY_DATA.length}`;
+
+      let rowsHtml = group.items.map(item => {
+        const isYes = currentAns.YES === item.label;
+        const isNo = currentAns.NO === item.label;
+        return `
+          <tr>
+            <td class="opt-label">${item.label}</td>
+            <td class="yes-col">
+              <input type="radio" name="p-${group.id}-YES" value="${item.label}" ${isYes ? 'checked' : ''} 
+                onchange="savePersonalityAnswer(${group.id}, '${item.label}', 'YES')">
+            </td>
+            <td class="no-col">
+              <input type="radio" name="p-${group.id}-NO" value="${item.label}" ${isNo ? 'checked' : ''} 
+                onchange="savePersonalityAnswer(${group.id}, '${item.label}', 'NO')">
+            </td>
+            <td class="text-left">${escapeHtml(item.text)}</td>
+          </tr>
+        `;
+      }).join('');
+
+      body.innerHTML = `
+        <table class="personality-table animate-fadeUp">
+          <tr>
+            <th class="q-num-col" rowspan="5">${group.id}</th>
+            <th></th>
+            <th class="yes-col">YES</th>
+            <th class="no-col">NO</th>
+            <th class="text-left">▼・・【質問項目】</th>
+          </tr>
+          ${rowsHtml}
+        </table>
+      `;
+
+      document.getElementById('btnPrevPersonality').disabled = personalityIdx === 0;
+      document.getElementById('btnNextPersonality').textContent = 
+        personalityIdx === PERSONALITY_DATA.length - 1 ? '提交测试' : '下一组';
+    }
+
+    document.getElementById('btnNextPersonality')?.addEventListener('click', () => {
+      // 检查当前组是否已选好 YES 和 NO
+      const group = PERSONALITY_DATA[personalityIdx];
+      const ans = getPersonalityAnswers();
+      const currentAns = ans[group.id] || {};
+      
+      if (!currentAns.YES || !currentAns.NO) {
+        showToast('请在 YES 和 NO 列各选择一个最符合与最不符合的选项');
+        return;
+      }
+
+      // 试用拦截逻辑：非会员限做1组
+      if (!isVip() && personalityIdx >= 0) { // 索引0即第1组
+        const done = parseInt(localStorage.getItem(LS_TRIAL_PERSONALITY) || '0');
+        if (done >= 1) {
+          return blockToVip('试用性格测试已用完（1组），请开通会员');
+        }
+        localStorage.setItem(LS_TRIAL_PERSONALITY, '1');
+      }
+
+      if (personalityIdx < PERSONALITY_DATA.length - 1) {
+        personalityIdx++;
+        renderPersonalityGroup();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        document.getElementById('personalityStage').classList.add('hidden');
+        document.getElementById('personalityResult').classList.remove('hidden');
+        showToast('测试提交成功');
+      }
+    });
+
+    document.getElementById('btnPrevPersonality')?.addEventListener('click', () => {
+      if (personalityIdx > 0) {
+        personalityIdx--;
+        renderPersonalityGroup();
+      }
+    });
+
+    document.getElementById('btnHomePersonality')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      window.location.href = '/Users/chenchen/Desktop/gab/personality-test.html';
+    });
     // ===== 委托中心 =====
     const DELEGATE_ITEMS = [
       { name: 'SPI', price: 500, urls: ['http://arorua.net/'] },
