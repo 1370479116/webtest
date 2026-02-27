@@ -1242,6 +1242,16 @@
       return safeJsonParse(localStorage.getItem(LS_KEYS.bank), []);
     }
 
+    // 远端题库（不写回 localStorage，避免容量爆掉）
+    const remoteBanks = {
+      merged: [] // 由清单加载得到的所有远端题（含阅读+计算）
+    };
+
+    function getEffectiveBank() {
+      // 本地录入题 + 远端题库，按 id 去重（后出现覆盖前出现）
+      return mergeById(loadBank(), remoteBanks.merged || []);
+    }
+
     function isQuotaExceededError(err) {
       if (!err) return false;
       if (err instanceof DOMException) {
@@ -2373,7 +2383,7 @@
 
     function refreshAdminPanel() {
       const totalEl = document.getElementById('adminTotalQuestions');
-      if (totalEl) totalEl.textContent = String(loadBank().length);
+      if (totalEl) totalEl.textContent = String(getEffectiveBank().length);
       mountAdminUploadForm();
       renderAdminQuestionList();
       renderAdminFeedbackList();
@@ -2393,7 +2403,7 @@
       const payload = {
         version: 1,
         exportedAt: Date.now(),
-        bank: loadBank(),
+        bank: getEffectiveBank(),
         wrong: loadWrong(),
         settings: loadSettings(),
         history: loadHistory()
@@ -2424,7 +2434,11 @@
         }
         const bankNorm = bankIn.map(normalizeBankItem).filter(Boolean);
         const merged = mergeById(loadBank(), bankNorm);
-        saveBank(merged);
+        const ok = saveBank(merged);
+        if (!ok) {
+          showToast('导入失败：本地题库空间不足，请减少导入量后重试');
+          return;
+        }
         refreshAllLists();
         refreshAdminPanel?.();
         showToast('题库已导入（合并）');
@@ -2470,7 +2484,7 @@
       const type = document.getElementById('adminQuestionFilter')?.value || 'all';
       const kw = (document.getElementById('adminSearchQuestions')?.value || '').trim().toLowerCase();
 
-      let list = loadBank();
+      let list = getEffectiveBank();
       if (type !== 'all') list = list.filter(x => x.type === type);
       if (kw) {
         list = list.filter(x => {
@@ -2561,7 +2575,10 @@
 
           const bank = loadBank();
           const idx = bank.findIndex(x => x.id === id);
-          if (idx === -1) return;
+          if (idx === -1) {
+            showToast('仅支持编辑本地录入题；远端题库请在 JSON 源文件中修改');
+            return;
+          }
 
           const item = bank[idx];
           const stemEl = form.querySelector('.edit-stem');
@@ -2787,7 +2804,7 @@
       const rows = Array.from(agg.entries());
 
       function findQuestionDetailByKey(qKey, type) {
-        const bank = loadBank();
+        const bank = getEffectiveBank();
         if (type === 'calc') {
           const item = bank.find(x => x && x.type === 'calc' && x.id === qKey);
           if (!item) return null;
@@ -2964,7 +2981,7 @@
 
     // ===== 题库/错题：渲染与统计 =====
     function refreshStats() {
-      const bank = loadBank();
+      const bank = getEffectiveBank();
       const wrong = loadWrong();
       const lang = normalizeLang(getLang());
       const statQ = document.getElementById('statQ');
@@ -2996,7 +3013,7 @@
     }
 
     function renderBank() {
-      const bank = loadBank();
+      const bank = getEffectiveBank();
       const el = document.getElementById('bankList');
       if (!el) return;
       if (!bank.length) {
@@ -3347,7 +3364,7 @@
     }
 
     function getBankByType(type) {
-      const bank = loadBank();
+      const bank = getEffectiveBank();
       if (type === 'reading') return bank.filter(x => x.type === 'reading');
       return bank.filter(x => x.type === 'calc');
     }
@@ -4041,7 +4058,11 @@
       const bankMerged = mergeById(loadBank(), bankNorm);
       const wrongMerged = mergeById(loadWrong(), wrongNorm);
 
-      saveBank(bankMerged);
+      const ok = saveBank(bankMerged);
+      if (!ok) {
+        showToast('导入失败：题库空间不足，请减少导入量后重试');
+        return;
+      }
       saveWrong(wrongMerged);
 
       if (settingsIn) {
@@ -4453,33 +4474,51 @@
     });
 
     async function initDefaultBankIfNeeded() {
-      // 无论是否是管理员，都尝试加载/合并默认题库
-      try {
-        const url = `questions.json?v=${encodeURIComponent(String(Date.now()))}`;
-        const res = await fetch(url, { cache: 'no-store' });
-        if (!res.ok) {
-          console.error('Failed to fetch questions.json, status:', res.status);
-          return;
+      // 清单模式：默认读取 question-manifest.json；失败时回退到固定三库
+      async function fetchBankFrom(url) {
+        try {
+          const res = await fetch(`${url}?v=${encodeURIComponent(String(Date.now()))}`, { cache: 'no-store' });
+          if (!res.ok) {
+            console.error(`Failed to fetch ${url}, status:`, res.status);
+            return [];
+          }
+          const payload = await res.json();
+          const bankArray = Array.isArray(payload)
+            ? payload
+            : (Array.isArray(payload?.bank) ? payload.bank : null);
+          if (!bankArray) {
+            console.error('Central bank JSON structure not recognized.', payload);
+            return [];
+          }
+          return bankArray.map(normalizeBankItem).filter(Boolean);
+        } catch (e) {
+          console.error(`Failed to load or parse ${url}`, e);
+          return [];
         }
-        const payload = await res.json();
-        const bankArray = Array.isArray(payload)
-          ? payload
-          : (Array.isArray(payload?.bank) ? payload.bank : null);
+      }
 
-        if (!bankArray) {
-          console.error('Central bank JSON structure not recognized.', payload);
-          return;
+      async function fetchManifest() {
+        try {
+          const res = await fetch(`question-manifest.json?v=${encodeURIComponent(String(Date.now()))}`, { cache: 'no-store' });
+          if (!res.ok) throw new Error(`manifest status ${res.status}`);
+          const data = await res.json();
+          if (!Array.isArray(data?.files)) throw new Error('manifest.files is not array');
+          const files = data.files.map(x => String(x || '').trim()).filter(Boolean);
+          return files.length ? files : null;
+        } catch {
+          return null;
         }
+      }
 
-        const normalized = bankArray.map(normalizeBankItem).filter(Boolean);
-        if (!normalized.length) return;
-        
-        // 使用 mergeById 逻辑，将 questions.json 的题目合并到本地，而不是直接覆盖
-        const currentBank = loadBank();
-        const merged = mergeById(currentBank, normalized);
-        saveBank(merged); 
-      } catch (e) {
-        console.error('Failed to load or parse central question bank', e);
+      const manifestFiles = await fetchManifest();
+      const files = manifestFiles || ['questions.json', 'questions-reading.json', 'questions-calc.json'];
+
+      const loaded = await Promise.all(files.map(fetchBankFrom));
+      const mergedRemote = loaded.reduce((acc, arr) => mergeById(acc, arr), []);
+      remoteBanks.merged = mergedRemote;
+
+      if (!remoteBanks.merged.length) {
+        console.warn('No remote banks loaded.');
       }
     }
 
