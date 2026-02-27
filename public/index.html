@@ -5,8 +5,58 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="color-scheme" content="light dark" />
   <title>GAB/玉手箱</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
-  <script src="https://cdn.tailwindcss.com"?v=02271252></script>
+  <script>
+    // 前端版本戳：基于文件最后修改时间（仅在重新部署后变化）
+    (function forceRefreshOnNewVersion() {
+      const buildTs = Date.parse(document.lastModified || '') || 0;
+      const APP_VERSION = `build-${buildTs}`;
+      const VERSION_KEY = 'webtest_app_version';
+      try {
+        const saved = localStorage.getItem(VERSION_KEY);
+        if (saved !== APP_VERSION) {
+          localStorage.setItem(VERSION_KEY, APP_VERSION);
+          const url = new URL(location.href);
+          if (url.searchParams.get('_v') !== APP_VERSION) {
+            url.searchParams.set('_v', APP_VERSION);
+            location.replace(url.toString());
+          }
+        }
+      } catch (e) {
+        console.warn('version refresh check failed', e);
+      }
+    })();
+  </script>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
+  <script>
+    // 前端版本戳：基于文件最后修改时间（仅在重新部署后变化）
+    (function forceRefreshOnNewVersion() {
+      const buildTs = Date.parse(document.lastModified || '') || 0;
+      const APP_VERSION = `build-${buildTs}`;
+      const VERSION_KEY = 'webtest_app_version';
+      try {
+        const saved = localStorage.getItem(VERSION_KEY);
+        if (saved !== APP_VERSION) {
+          localStorage.setItem(VERSION_KEY, APP_VERSION);
+          const url = new URL(location.href);
+          if (url.searchParams.get('_v') !== APP_VERSION) {
+            url.searchParams.set('_v', APP_VERSION);
+            location.replace(url.toString());
+          }
+        }
+      } catch (e) {
+        console.warn('version refresh check failed', e);
+      }
+    })();
+  </script>
+
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
   <link
     rel="stylesheet"
@@ -728,6 +778,16 @@
               </div>
             </div>
 
+            <div>
+              <div class="text-xs font-semibold text-ink-500 dark:text-ink-400">快速录入（每行一个选项，按 A→E 顺序）</div>
+              <textarea id="calcQuickOptions" class="mt-1 w-full rounded-2xl border border-ink-200 bg-white px-3 py-2 text-sm text-ink-800 outline-none transition focus:border-accent-500 focus:ring-4 focus:ring-[rgba(109,94,241,.14)] dark:border-white/10 dark:bg-white/5 dark:text-ink-100" rows="5" placeholder="56.8%
+57.9%
+58.4%
+59.2%
+60.5%"></textarea>
+              <button id="btnApplyCalcQuickOptions" type="button" class="mt-2 rounded-xl border border-ink-200 bg-white px-3 py-2 text-xs font-semibold text-ink-700 transition hover:scale-[1.01] hover:border-ink-300 hover:bg-ink-50 dark:border-white/10 dark:bg-white/5 dark:text-ink-100">一键填入 A~E</button>
+            </div>
+
             <div class="flex items-center gap-3">
               <div class="text-xs font-semibold text-ink-500 dark:text-ink-400" data-i18n="upload.calcAnswer">正确答案</div>
               <select id="calcAnswer" class="rounded-xl border border-ink-200 bg-white px-2 py-2 text-sm font-semibold text-ink-800 dark:border-white/10 dark:bg-white/5 dark:text-ink-100"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select>
@@ -1179,8 +1239,28 @@
       return safeJsonParse(localStorage.getItem(LS_KEYS.bank), []);
     }
 
+    function isQuotaExceededError(err) {
+      if (!err) return false;
+      if (err instanceof DOMException) {
+        return err.code === 22 || err.code === 1014 || err.name === 'QuotaExceededError' || err.name === 'NS_ERROR_DOM_QUOTA_REACHED';
+      }
+      const msg = String(err?.message || err || '').toLowerCase();
+      return msg.includes('quota') || msg.includes('exceeded');
+    }
+
     function saveBank(bank) {
-      localStorage.setItem(LS_KEYS.bank, JSON.stringify(bank));
+      try {
+        localStorage.setItem(LS_KEYS.bank, JSON.stringify(bank));
+        return true;
+      } catch (err) {
+        if (isQuotaExceededError(err)) {
+          showToast('保存失败：浏览器本地存储空间已满。请先清空部分题库或压缩图片后重试。');
+        } else {
+          showToast('保存失败：本地存储异常，请稍后重试。');
+        }
+        console.error('saveBank failed:', err);
+        return false;
+      }
     }
 
     function loadWrong() {
@@ -3120,6 +3200,29 @@
         if (calcPreviewWrap) calcPreviewWrap.classList.remove('hidden');
       };
       reader.readAsDataURL(file);
+    });
+
+    document.getElementById('btnApplyCalcQuickOptions')?.addEventListener('click', () => {
+      const hint = document.getElementById('calcHint');
+      const quickText = String(document.getElementById('calcQuickOptions')?.value || '');
+      const lines = quickText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+      if (lines.length < 5) {
+        if (hint) hint.textContent = '快速录入至少需要 5 行（对应 A~E）';
+        return;
+      }
+
+      const [A, B, C, D, E] = lines;
+      const aEl = document.getElementById('cA');
+      const bEl = document.getElementById('cB');
+      const cEl = document.getElementById('cC');
+      const dEl = document.getElementById('cD');
+      const eEl = document.getElementById('cE');
+      if (aEl) aEl.value = A;
+      if (bEl) bEl.value = B;
+      if (cEl) cEl.value = C;
+      if (dEl) dEl.value = D;
+      if (eEl) eEl.value = E;
+      if (hint) hint.textContent = `已按顺序填入 A~E${lines.length > 5 ? '（仅使用前 5 行）' : ''}`;
     });
 
     document.getElementById('btnAddCalc')?.addEventListener('click', () => {
