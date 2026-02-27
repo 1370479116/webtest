@@ -3193,14 +3193,20 @@
     const calcImageName = document.getElementById('calcImageName');
     const calcPreviewWrap = document.getElementById('calcPreviewWrap');
     const calcPreviewImg = document.getElementById('calcPreviewImg');
+    const LAST_CALC_IMAGE_NAME_KEY = 'lastCalcImageName';
+
+    const lastCalcImageName = localStorage.getItem(LAST_CALC_IMAGE_NAME_KEY) || '';
+    if (calcImageName) calcImageName.textContent = lastCalcImageName || '未选择图片';
 
     calcImage?.addEventListener('change', () => {
       const file = calcImage.files && calcImage.files[0];
       if (!file) {
-        if (calcImageName) calcImageName.textContent = '未选择图片';
+        const remembered = localStorage.getItem(LAST_CALC_IMAGE_NAME_KEY) || '';
+        if (calcImageName) calcImageName.textContent = remembered || '未选择图片';
         return;
       }
       if (calcImageName) calcImageName.textContent = file.name;
+      localStorage.setItem(LAST_CALC_IMAGE_NAME_KEY, file.name);
       const reader = new FileReader();
       reader.onload = () => {
         calcImageDataUrl = String(reader.result || '');
@@ -3281,7 +3287,7 @@
       // 添加成功后清空表单并隐藏预览，便于继续录入
       calcImageDataUrl = '';
       document.getElementById('calcImage').value = '';
-      if (calcImageName) calcImageName.textContent = '未选择图片';
+      if (calcImageName) calcImageName.textContent = localStorage.getItem(LAST_CALC_IMAGE_NAME_KEY) || '未选择图片';
       if (calcPreviewImg) calcPreviewImg.src = '';
       if (calcPreviewWrap) calcPreviewWrap.classList.add('hidden');
       document.getElementById('calcStem').value = '';
