@@ -10,7 +10,7 @@
   <meta http-equiv="Expires" content="0" />
 
   <script>
-    // 前端版本戳：基于文件最后修改时间（仅在重新部署后变化）
+    // 前端版本戳：基于文件最后修改时间（仅重新部署后变化）
     (function forceRefreshOnNewVersion() {
       const buildTs = Date.parse(document.lastModified || '') || 0;
       const APP_VERSION = `build-${buildTs}`;
